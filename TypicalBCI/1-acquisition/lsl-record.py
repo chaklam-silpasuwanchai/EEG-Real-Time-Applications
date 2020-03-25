@@ -62,7 +62,8 @@ t_init = time()
 print('Start recording at time t=%.3f' % t_init)
 while (time() - t_init) < options.duration:
     try:
-        data, timestamp = inlet.pull_chunk(timeout=1.0, max_samples=12)
+        data, timestamp = inlet.pull_chunk(timeout=1.0,
+                                           max_samples=12)
         if timestamp:
             res.append(data)
             timestamps.extend(timestamp)
@@ -86,14 +87,14 @@ timestamps = np.array(timestamps)
 res = np.c_[timestamps, res]
 data = pd.DataFrame(data=res, columns=['timestamps'] + ch_names)
 
-
 data['Marker'] = 0
 # process markers:
 for marker in markers:
     # find index of margers
-    ix = np.argmin(np.abs(marker[1] - timestamps))  #find the index with least amount of time differences
+    ix = np.argmin(np.abs(marker[1] - timestamps))
     val = timestamps[ix]
     data.loc[ix, 'Marker'] = marker[0][0]
+
 
 data.to_csv(options.filename, float_format='%.3f', index=False)
 
