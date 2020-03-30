@@ -15,6 +15,11 @@ Hardware:
 Software:
 - Python-based
 
+All code will be centered around 3 typical steps
+1. Data acquisition
+2. Experiment (stimuli)
+3. Analysis
+
 Analysis will include:
 1. Basic feature extraction and classification
 2. Common Spatial Pattern and classification
