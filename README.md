@@ -25,4 +25,3 @@ Analysis will include:
 2. Common Spatial Pattern and classification
 3. Long Short-Term Memory Recurrent Neural network
 4. Temporal Convolutional Network
-5. Convolutional Network (squeezed time into image-like vectors)
