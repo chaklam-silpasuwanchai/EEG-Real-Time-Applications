@@ -3,7 +3,6 @@
 import mne
 from mne import create_info
 from mne.io import RawArray
-from mne.channels import read_montage
 
 def df_to_raw(df):
     sfreq = 250
@@ -14,10 +13,10 @@ def df_to_raw(df):
     df = df.T  #mne looks at the tranpose() format
     df[:-1] *= 1e-6  #convert from uVolts to Volts (mne assumes Volts data)
 
-    info = create_info(ch_names=ch_names, ch_types=ch_types, sfreq=sfreq,
-                  montage=ten_twenty_montage)
+    info = create_info(ch_names=ch_names, ch_types=ch_types, sfreq=sfreq)
 
     raw = mne.io.RawArray(df, info)
+    raw.set_montage(ten_twenty_montage)
 
     #try plotting the raw data of its power spectral density
     raw.plot_psd()
@@ -46,7 +45,10 @@ def getEpochs(raw, event_id, tmin, tmax):
 
     epochs = Epochs(raw, events=events, event_id=event_id, 
                     tmin=tmin, tmax=tmax, baseline=None, preload=True, 
-                    reject=reject_criteria,verbose=False)
+                    reject=reject_criteria,verbose=False, picks=[0,1,2,3,4,5,6,7])  #8 channels
     print('sample drop %: ', (1 - len(epochs.events)/len(events)) * 100)
+
+    conds_we_care_about = ['Amusement', 'Anger']
+    epochs.equalize_event_counts(conds_we_care_about)  # this operates in-place
 
     return epochs

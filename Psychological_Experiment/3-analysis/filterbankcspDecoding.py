@@ -35,8 +35,10 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 import seaborn as sns
 
 def decode(raw, event_id, tmin, tmax, band_width, band_overlap, low_freq, n_filters):
+
     pipeline_list = []
     step = band_width - band_overlap  
+
     bands = range(low_freq, low_freq + n_filters * step, step)
 
     raw_list = []
@@ -53,7 +55,7 @@ def decode(raw, event_id, tmin, tmax, band_width, band_overlap, low_freq, n_filt
         epoch_list.append(epoch)
 
     #loop through each filter bank of epoch and perform modeling
-    #this will take around 10 minutes, so sip a coffee and wait
+    #this will take around 30 minutes, so sip a coffee and wait
     for epoch in epoch_list:
         result = model(epoch)
         plot(result, low_freq, band_width)
@@ -74,7 +76,7 @@ Evaluation is done through cross-validation, with area-under-the-curve (AUC) as 
 def model(epoch):
 
     epoch.pick_types(eeg=True)
-    X = epoch.get_data()  #n_epochs * n_channel * n_time_samples  
+    X = epoch.get_data() #n_epochs * n_channel * n_time_samples  
      #CSP will take in data in this form and create features of 2d
     y = epoch.events[:, -1]
 
@@ -92,7 +94,7 @@ def model(epoch):
     scale = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
     csp = CSP(n_components=3, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
 
-    clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
+    #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
     clfs['CSP + LDA'] = Pipeline([('CSP', csp), ('Model', lda)])
     clfs['CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc)])
     clfs['CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr)])
@@ -100,7 +102,7 @@ def model(epoch):
     clfs['CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb)])
     clfs['CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf)])
     clfs['Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm)]) #oas is needed for non-PD matrix
-    clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
+    #clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
     #not sure why TS is not working....
 
     auc = []

@@ -16,6 +16,7 @@ from mne.time_frequency import psd_welch
 from sklearn.metrics import accuracy_score
 from mne.viz import tight_layout
 import numpy as np
+import helper as helper
 
 """
 This function takes an ``mne.Epochs`` object and creates EEG features based
@@ -48,14 +49,16 @@ def eeg_power_band(epochs):
 """
 Scikit-learn pipeline composes an estimator as a sequence of transforms and a final estimator, while the FunctionTransformer converts a python function in an estimator compatible object. In this manner we can create scikit-learn estimator that takes mne.Epochs thanks to eeg_power_band function we just created.
 """
-def decode(epochs, event_id):
-    pipe = make_pipeline(FunctionTransformer(eeg_power_band, validate=False), RandomForestClassifier(n_estimators=100, random_state=42))
-    
+def decode(raw, event_id, tmin, tmax):
+    epochs = helper.getEpochs(raw, event_id, tmin, tmax)
+
     y = epochs.events[:, -1]
 
     # define cross validation 
     cv = StratifiedShuffleSplit(n_splits=20, test_size=0.25, 
                             random_state=42)
+
+    pipe = make_pipeline(FunctionTransformer(eeg_power_band, validate=False), RandomForestClassifier(n_estimators=100, random_state=42))
 
     # do cross-validation
     preds = np.empty(len(y))
