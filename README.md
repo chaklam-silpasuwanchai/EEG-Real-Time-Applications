@@ -1,11 +1,12 @@
 # BCI
 
-This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective.  Particularly, this is an ongoing project and I intend to populate this with at least four examples:
+This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective.  Particularly, this is an ongoing project and I intend to populate this with at least five examples:
 
 1. Psychological Experiment
 2. SSVEP + control  (real-time)
 3. P300 + speller  (real-time)
 4. MI + control   (real-time)
+5. Existing Dataset (probably start with DEAP, and other famous datasets)
 
 All will be centered around the use of:
 
