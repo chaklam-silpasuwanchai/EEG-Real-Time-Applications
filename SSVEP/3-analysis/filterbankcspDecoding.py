@@ -9,6 +9,7 @@
 """
 
 import pandas as pd
+import numpy as np
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.linear_model import LogisticRegression
@@ -20,13 +21,13 @@ from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
 
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
+from sklearn.model_selection import KFold, cross_val_score, StratifiedShuffleSplit
+from sklearn.metrics import accuracy_score, classification_report
 
 from mne import Epochs, find_events
-from mne.decoding import CSP, Vectorizer, Scaler
+from mne.decoding import CSP, Vectorizer, Scaler, SPoC
 
-from pyriemann.classification import MDM
-from pyriemann.tangentspace import TangentSpace
+from pyriemann.classification import MDM, TSclassifier
 from pyriemann.estimation import Covariances
 
 from collections import OrderedDict
@@ -52,90 +53,153 @@ def decode(epoch):
 
     epoch.pick_types(eeg=True)
     X = epoch.get_data() * 1e6 #n_epochs * n_channel * n_time_samples  
-
+    cov_X = Covariances().transform(X)
+    #print(cov_X)
     #print(X)
      #CSP will take in data in this form and create features of 2d
     y = epoch.events[:, -1]
-    #y = label_binarize(y,classes=[1,2,3])
-    #print(y)
+    y = label_binarize(y,classes=[1,2,3]) #one-hot encoding
 
-    #print(y)
+    #cv = KFold(n_splits=10, random_state=None)
+
+    cv = StratifiedShuffleSplit(n_splits=30, test_size=0.25)
+
+    # #classification with Minimum distance to mean
+    # mdm = MDM(metric=dict(mean='riemann', distance='riemann'))
+    # scores = cross_val_score(mdm, cov_X, y, cv=cv, n_jobs=1)
+
+    # class_balance = np.mean(y == y[0])
+    # class_balance = max(class_balance, 1. - class_balance)
+    # print("MDM Classification accuracy: %f / Chance level: %f" % (np.mean(scores),
+    #                                                           class_balance))
+    
+    
+    # #classification with Tangent Space Logistic Regression
+    # clf = TSclassifier()
+    # # Use scikit-learn Pipeline with cross_val_score function
+    # scores = cross_val_score(clf, cov_X, y, cv=cv, n_jobs=1)
+
+    # # Printing the results
+    # class_balance = np.mean(y == y[0])
+    # class_balance = max(class_balance, 1. - class_balance)
+    # print("Tangent space Classification accuracy: %f / Chance level: %f" %
+    #       (np.mean(scores), class_balance))
+
+
+    # #classification with CSP + logistic Regression
+    # lr = LogisticRegression(multi_class='multinomial')  #note the multiclass
+    # csp = CSP(n_components=4, reg='ledoit_wolf', log=True)
+    # clf = Pipeline([('CSP', csp), ('LogisticRegression', lr)])
+    # scores = cross_val_score(clf, X, y, cv=cv, n_jobs=1)
+
+    # # Printing the results
+    # class_balance = np.mean(y == y[0])
+    # class_balance = max(class_balance, 1. - class_balance)
+    # print("CSP + LogisticRegression Classification accuracy: %f / Chance level: %f" %
+    #       (np.mean(scores), class_balance))
+
+    # #classification with CSP + LDA
+    # lda = LDA(shrinkage='auto', solver='eigen') #Regularized LDA #inherently multiclass
+    # csp = CSP(n_components=4, reg='ledoit_wolf', log=True)
+    # clf = Pipeline([('CSP', csp), ('lda', lda)])
+    # scores = cross_val_score(clf, X, y, cv=cv, n_jobs=1)
+
+    # # Printing the results
+    # class_balance = np.mean(y == y[0])
+    # class_balance = max(class_balance, 1. - class_balance)
+    # print("CSP + LDA Classification accuracy: %f / Chance level: %f" %
+    #       (np.mean(scores), class_balance))
 
     clfs = OrderedDict()
     
-    lda = OneVsRestClassifier(LDA(shrinkage='auto', solver='eigen')) #Regularized LDA
+    lda = LDA(shrinkage='auto', solver='eigen') #Regularized LDA
     svc = OneVsRestClassifier(SVC())
-    lr = OneVsRestClassifier(LogisticRegression())
-    knn = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=3)) #you would want to optimize
-    nb = OneVsRestClassifier(GaussianNB())
-    rf = OneVsRestClassifier(RandomForestClassifier(n_estimators=50, random_state=1))
-    mdm = OneVsRestClassifier(MDM())
-    ts = OneVsRestClassifier(TangentSpace())
-    vec = OneVsRestClassifier(Vectorizer())
-    scale = OneVsRestClassifier(Scaler(epoch.info))  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
-    csp = CSP(n_components=3, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
+    lr = LogisticRegression(multi_class='multinomial')
+    knn = KNeighborsClassifier(n_neighbors=3) #you would want to optimize
+    nb = GaussianNB()
+    rf = RandomForestClassifier(n_estimators=50)
+    mdm = MDM()
+    ts = TSclassifier()    
+    # vec = Vectorizer()    
+    # scale = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
+    csp = CSP(n_components=4, reg='ledoit_wolf', log=True)
 
-    #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
-    clfs['CSP + LDA'] = Pipeline([('CSP', csp), ('Model', lda)])
-    clfs['CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc)])
-    clfs['CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr)])
+    # #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
+    clfs['CSP + LDA'] = Pipeline([('CSP', csp), ('lda', lda)])
+    clfs['CSP + SVC'] = Pipeline([('CSP', csp), ('svc', svc)])
+    clfs['CSP + LR'] = Pipeline([('CSP', csp), ('lr', lr)])
     clfs['CSP + KNN'] = Pipeline([('CSP', csp), ('Model', knn)])
-    clfs['CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb)])
-    clfs['CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf)])
-    clfs['Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm)]) #oas is needed for non-PD matrix
-    #clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
-    # #not sure why TS is not working....
+    clfs['CSP + NB'] = Pipeline([('CSP', csp), ('nb', nb)])
+    clfs['CSP + RF'] = Pipeline([('CSP', csp), ('rf', rf)])
+    clfs['Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('mdm', mdm)]) #oas is needed for non-PD matrix
+    clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('ts', ts)]) #oas is needed for non-PD matrix
+    # # #not sure why TS is not working....
 
 
-    lda2 = LDA(shrinkage='auto', solver='eigen') #Regularized LDA
-    svc2 = SVC()
-    lr2 = LogisticRegression()
-    knn2 = KNeighborsClassifier(n_neighbors=3) #you would want to optimize
-    nb2 = GaussianNB()
-    rf2 = RandomForestClassifier(n_estimators=50, random_state=1)
-    mdm2 = MDM()
-    ts2 = TangentSpace()
-    vec2 = Vectorizer()
-    scale2 = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
-    csp2 = CSP(n_components=3, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
+    # lda2 = LDA(shrinkage='auto', solver='eigen') #Regularized LDA
+    # svc2 = SVC()
+    # lr2 = LogisticRegression()
+    # knn2 = KNeighborsClassifier(n_neighbors=3) #you would want to optimize
+    # nb2 = GaussianNB()
+    # rf2 = RandomForestClassifier(n_estimators=50, random_state=1)
+    # mdm2 = MDM()
+    # ts2 = TangentSpace()
+    # vec2 = Vectorizer()
+    # scale2 = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
+    # csp2 = CSP(n_components=2, norm_trace=False, log=True) #feature extraction, reg is used when data is not PD (positive definite)
 
-    #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
-    clfs['2CSP + LDA'] = Pipeline([('CSP', csp), ('Model', lda2)])
-    clfs['2CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc2)])
-    clfs['2CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr2)])
-    clfs['2CSP + KNN'] = Pipeline([('CSP', csp), ('Model', knn2)])
-    clfs['2CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb2)])
-    clfs['2CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf2)])
-    clfs['2Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm2)]) #oas is needed for non-PD matrix
-    #clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
-    # #not sure why TS is not working....
+    # #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
+    # clfs['2CSP + LDA'] = Pipeline([('CSP', csp), ('Model', lda2)])
+    # clfs['2CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc2)])
+    # clfs['2CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr2)])
+    # clfs['2CSP + KNN'] = Pipeline([('CSP', csp), ('Model', knn2)])
+    # clfs['2CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb2)])
+    # clfs['2CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf2)])
+    # clfs['2Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm2)]) #oas is needed for non-PD matrix
+    # #clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
+    # # #not sure why TS is not working....
 
 
     auc = []
     methods = []
 
-    # define cross validation (i put 10 to reduce time for demo)
-    cv = StratifiedShuffleSplit(n_splits=10, test_size=0.25, 
-                            random_state=42)
+    # # define cross validation (i put 10 to reduce time for demo)
+    # cv = StratifiedShuffleSplit(n_splits=10, test_size=0.25, 
+    #                         random_state=42)
 
     for m in clfs:
-        print("+", end="") #to know it's working, no newline
-        res = cross_val_score(clfs[m], X, y, n_jobs=-1)
-        auc.extend(res)
-        #print(auc)
-        methods.extend([m]*len(res))
-    
-    results = pd.DataFrame(data=auc, columns=['AUC'])
-    results['Method'] = methods
+        preds = np.empty(len(y))
+        for train, test in cv.split(X, y):
+            clfs[m].fit(X[train], y[train])
+            preds[test] = clfs[m].predict(X[test])
+            acc = accuracy_score(y[test], preds[test])
+            print("Accuracy score: {}".format(acc))
 
-    plot(results)
+        print(classification_report(y[test], preds[test]))
+
+    #     print("+", end="") #to know it's working, no newline
+    #     res = cross_val_score(clfs[m], X, y, n_jobs=-1)
+
+    #     # Printing the results
+    #     class_balance = np.mean(y == y[0])
+    #     class_balance = max(class_balance, 1. - class_balance)
+    #     print("CSP + LDDDDDA Classification accuracy: %f / Chance level: %f" %
+    #           (np.mean(res), class_balance))
+
+    #     auc.extend(res)
+    #     #print(auc)
+    #     methods.extend([m]*len(res))
+    
+    # results = pd.DataFrame(data=auc, columns=['AUC'])
+    # results['Method'] = methods
+    # print(results.tail())
+
+    # plot(results)
 
 def plot(df):
     figure = plt.figure(figsize=[8,4])
     plt.title("AOC")
-    #print(df.head())
     sns.barplot(data=df, x='AUC', y='Method')
     plt.xlim(0.4, 1)    
-    sns.despine()
 
 
