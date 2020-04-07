@@ -45,10 +45,7 @@ def getEpochs(raw, event_id, tmin, tmax):
 
     epochs = Epochs(raw, events=events, event_id=event_id, 
                     tmin=tmin, tmax=tmax, baseline=None, preload=True, 
-                    reject=reject_criteria,verbose=False, picks=[0,1,2,3,4,5,6,7])  #8 channels
+                    reject=reject_criteria,verbose=False, picks=[0,1,2])  #8 channels
     print('sample drop %: ', (1 - len(epochs.events)/len(events)) * 100)
-
-    conds_we_care_about = ['Amusement', 'Anger']
-    epochs.equalize_event_counts(conds_we_care_about)  # this operates in-place
 
     return epochs
