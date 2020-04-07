@@ -36,14 +36,6 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'figure.max_open_warning': 0})
 import seaborn as sns
 
-def decode(raw, event_id, tmin, tmax):
-
-    #raw_filt = raw.copy().filter(4, 20, method='iir')
-    
-    epoch = helper.getEpochs(raw, event_id, tmin=tmin, tmax=tmax)
-        
-    result = model(epoch)
-    plot(result)
 
 """
 - **CSP + Classifier** :  Common Spatial Patterns + Regularized Linear Discriminat Analysis. This is a very common EEG analysis pipeline.
@@ -56,7 +48,7 @@ Evaluation is done through cross-validation, with area-under-the-curve (AUC) as 
 
 *Note: Scikit-learn API provides functionality to chain transformers and estimators by using sklearn.pipeline.Pipeline. We can construct decoding pipelines and perform cross-validation and grid-search. However scikit-learn transformers and estimators generally expect 2D data (n_samples * n_features), whereas MNE transformers typically output data with a higher dimensionality (e.g. n_samples * n_channels * n_times). A Vectorizer or Covariances or CSP therefore needs to be applied between the MNE and the scikit-learn steps.
 """
-def model(epoch):
+def decode(epoch):
 
     epoch.pick_types(eeg=True)
     X = epoch.get_data() #n_epochs * n_channel * n_time_samples  
@@ -71,16 +63,16 @@ def model(epoch):
 
     clfs = OrderedDict()
     
-    lda = LDA(shrinkage='auto', solver='eigen') #Regularized LDA
+    lda = OneVsRestClassifier(LDA(shrinkage='auto', solver='eigen')) #Regularized LDA
     svc = OneVsRestClassifier(SVC())
     lr = OneVsRestClassifier(LogisticRegression())
     knn = OneVsRestClassifier(KNeighborsClassifier(n_neighbors=3)) #you would want to optimize
     nb = OneVsRestClassifier(GaussianNB())
     rf = OneVsRestClassifier(RandomForestClassifier(n_estimators=50, random_state=1))
-    mdm = MDM()
-    ts = TangentSpace()
-    vec = Vectorizer()
-    scale = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
+    mdm = OneVsRestClassifier(MDM())
+    ts = OneVsRestClassifier(TangentSpace())
+    vec = OneVsRestClassifier(Vectorizer())
+    scale = OneVsRestClassifier(Scaler(epoch.info))  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
     csp = CSP(n_components=3, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
 
     #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
@@ -93,6 +85,31 @@ def model(epoch):
     clfs['Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm)]) #oas is needed for non-PD matrix
     #clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
     # #not sure why TS is not working....
+
+
+    lda2 = LDA(shrinkage='auto', solver='eigen') #Regularized LDA
+    svc2 = SVC()
+    lr2 = LogisticRegression()
+    knn2 = KNeighborsClassifier(n_neighbors=3) #you would want to optimize
+    nb2 = GaussianNB()
+    rf2 = RandomForestClassifier(n_estimators=50, random_state=1)
+    mdm2 = MDM()
+    ts2 = TangentSpace()
+    vec2 = Vectorizer()
+    scale2 = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
+    csp2 = CSP(n_components=3, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
+
+    #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
+    clfs['2CSP + LDA'] = Pipeline([('CSP', csp), ('Model', lda2)])
+    clfs['2CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc2)])
+    clfs['2CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr2)])
+    clfs['2CSP + KNN'] = Pipeline([('CSP', csp), ('Model', knn2)])
+    clfs['2CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb2)])
+    clfs['2CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf2)])
+    clfs['2Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm2)]) #oas is needed for non-PD matrix
+    #clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
+    # #not sure why TS is not working....
+
 
     auc = []
     methods = []
@@ -111,7 +128,7 @@ def model(epoch):
     results = pd.DataFrame(data=auc, columns=['AUC'])
     results['Method'] = methods
 
-    return results
+    plot(results)
 
 def plot(df):
     figure = plt.figure(figsize=[8,4])
