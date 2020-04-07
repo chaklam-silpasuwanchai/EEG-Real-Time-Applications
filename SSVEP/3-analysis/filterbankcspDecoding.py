@@ -38,9 +38,9 @@ import seaborn as sns
 
 def decode(raw, event_id, tmin, tmax):
 
-    raw_filt = raw.copy().filter(4, 20, method='iir')
+    #raw_filt = raw.copy().filter(4, 20, method='iir')
     
-    epoch = helper.getEpochs(raw_filt, event_id, tmin=tmin, tmax=tmax)
+    epoch = helper.getEpochs(raw, event_id, tmin=tmin, tmax=tmax)
         
     result = model(epoch)
     plot(result)
