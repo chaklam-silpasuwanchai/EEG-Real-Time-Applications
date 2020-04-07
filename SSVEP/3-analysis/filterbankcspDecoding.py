@@ -36,7 +36,7 @@ import seaborn as sns
 
 def decode(raw, event_id, tmin, tmax):
 
-    raw_filt = raw.copy().filter(4, 20, method='iir')
+    raw_filt = raw.copy().filter(5, 16, method='iir')
     
     epoch = helper.getEpochs(raw_filt, event_id, tmin=tmin, tmax=tmax)
         
@@ -58,8 +58,12 @@ def model(epoch):
 
     epoch.pick_types(eeg=True)
     X = epoch.get_data() #n_epochs * n_channel * n_time_samples  
+
+    #print(X)
      #CSP will take in data in this form and create features of 2d
     y = epoch.events[:, -1]
+
+    #print(y)
 
     clfs = OrderedDict()
     
@@ -73,18 +77,18 @@ def model(epoch):
     ts = TangentSpace()
     vec = Vectorizer()
     scale = Scaler(epoch.info)  #by default, CSP already does this, but if you use Vectorizer, you hve to do it before Vectorizing
-    csp = CSP(n_components=3, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
+    csp = CSP(n_components=2, reg=0.3) #feature extraction, reg is used when data is not PD (positive definite)
 
     #clfs['Vectorizer + LDA'] = Pipeline([('Scaler', scale), ('Vectorizer', vec), ('Model', lda)])
     clfs['CSP + LDA'] = Pipeline([('CSP', csp), ('Model', lda)])
-    clfs['CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc)])
-    clfs['CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr)])
-    clfs['CSP + KNN'] = Pipeline([('CSP', csp), ('Model', knn)])
-    clfs['CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb)])
-    clfs['CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf)])
-    clfs['Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm)]) #oas is needed for non-PD matrix
-    clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
-    #not sure why TS is not working....
+    # clfs['CSP + SVC'] = Pipeline([('CSP', csp), ('Model', svc)])
+    # clfs['CSP + LR'] = Pipeline([('CSP', csp), ('Model', lr)])
+    # clfs['CSP + KNN'] = Pipeline([('CSP', csp), ('Model', knn)])
+    # clfs['CSP + NB'] = Pipeline([('CSP', csp), ('Model', nb)])
+    # clfs['CSP + RF'] = Pipeline([('CSP', csp), ('Model', rf)])
+    # clfs['Cov + MDM'] = Pipeline([('Cov', Covariances('oas')), ('Model', mdm)]) #oas is needed for non-PD matrix
+    # clfs['Cov + TS'] = Pipeline([('Cov', Covariances('oas')), ('Model', ts)]) #oas is needed for non-PD matrix
+    # #not sure why TS is not working....
 
     auc = []
     methods = []
@@ -92,6 +96,9 @@ def model(epoch):
     # define cross validation (i put 10 to reduce time for demo)
     cv = StratifiedShuffleSplit(n_splits=10, test_size=0.25, 
                             random_state=42)
+
+    #print(X)
+    print(y)
 
     for m in clfs:
         print("+", end="") #to know it's working, no newline
@@ -104,7 +111,6 @@ def model(epoch):
             pass
     
     results = pd.DataFrame(data=auc, columns=['AUC'])
-    print(results.head())
     results['Method'] = methods
 
     return results
