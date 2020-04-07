@@ -44,7 +44,8 @@ def getEpochs(raw, event_id, tmin, tmax):
     reject_criteria = dict(eeg=100e-6)  #most frequency in this range is not brain components
 
     epochs = Epochs(raw, events=events, event_id=event_id, 
-                    tmin=tmin, tmax=tmax, baseline=None, preload=True, verbose=False, picks=[0,1,2,3,4,5])  #8 channels
+                    tmin=tmin, tmax=tmax, baseline=None, preload=True, 
+                    reject=reject_criteria,verbose=False)  #8 channels
     print('sample drop %: ', (1 - len(epochs.events)/len(events)) * 100)
 
     return epochs

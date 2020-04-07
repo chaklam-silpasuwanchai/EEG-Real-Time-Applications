@@ -51,7 +51,7 @@ Evaluation is done through cross-validation, with area-under-the-curve (AUC) as 
 def decode(epoch):
 
     epoch.pick_types(eeg=True)
-    X = epoch.get_data() #n_epochs * n_channel * n_time_samples  
+    X = epoch.get_data() * 1e6 #n_epochs * n_channel * n_time_samples  
 
     #print(X)
      #CSP will take in data in this form and create features of 2d
