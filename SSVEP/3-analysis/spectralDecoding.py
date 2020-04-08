@@ -25,12 +25,15 @@ scikit-learn.
 """
 def eeg_power_band(epochs):
     
-    # specific frequency bands
-    FREQ_BANDS = {"6hz": [4, 8],
-                  "10hz": [8, 12],
-                  "15hz": [13, 17]}
+    #according to https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0077536,
+    #the optimal range is 12-18hz
 
-    psds, freqs = psd_welch(epochs, picks='eeg', fmin=0.5, fmax=20)
+    # specific frequency bands
+    FREQ_BANDS = {"6hz": [11, 13],   #12hz is more visible than 6hz   
+                  "10hz": [9, 11],   
+                  "15hz": [14, 16]}
+
+    psds, freqs = psd_welch(epochs, picks='eeg', fmin=0.5, fmax=30)
     
     # Normalize the PSDs
     psds /= np.sum(psds, axis=-1, keepdims=True)
@@ -48,6 +51,8 @@ Scikit-learn pipeline composes an estimator as a sequence of transforms and a fi
 """
 def decode(raw, event_id, tmin, tmax):
     epochs = helper.getEpochs(raw, event_id, tmin, tmax)
+
+    print(eeg_power_band(epochs).shape)
 
     y = epochs.events[:, -1]
 
