@@ -14,7 +14,7 @@ Software:
 - Python-based
 
 All code will be centered around 3 typical steps
-1. Data acquisition
+1. Data acquisition (Credit: https://github.com/NeuroTechX)
 2. Experiment (stimuli) (incl. Online Classification or Training)
 3. Analysis
 
