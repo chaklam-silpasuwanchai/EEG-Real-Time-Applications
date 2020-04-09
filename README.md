@@ -5,7 +5,7 @@ This simple project was created to demonstrate how BCI can be done from Data acq
 Contributors:
 Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
 
-# Project Trivials
+## About
 
 Hardware:
 - OpenBCI + Cyton/Daisy, 250Hz
@@ -24,7 +24,7 @@ Analysis will include:
 3. Long Short-Term Memory Recurrent Neural network
 4. Temporal Convolutional Network
 
-# Project Topics
+## Topics
 
 1. **Psychological Experiment**
    1. Run <code>python lsl-stream</code> on the background
