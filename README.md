@@ -2,6 +2,11 @@
 
 This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective, mainly for my students at Asian Institute of Technology, ICT Department.  Particularly, this is an ongoing project and I intend to populate this with at least five examples.
 
+Contributors:
+Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
+
+# Project Trivials
+
 Hardware:
 - OpenBCI + Cyton/Daisy, 250Hz
 
@@ -19,8 +24,7 @@ Analysis will include:
 3. Long Short-Term Memory Recurrent Neural network
 4. Temporal Convolutional Network
 
-Contributors:
-Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
+# Project Topics
 
 1. **Psychological Experiment**
    1. Run <code>python lsl-stream</code> on the background
