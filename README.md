@@ -6,19 +6,19 @@ This simple project was created to demonstrate how BCI can be done from Data acq
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab; brain microvolts should be around -10; make sure you are properly   grounded (you can close after checking)
    3. Run 2-experiment/Presents-stimuli.ipynb  (do not click space yet)
-   4. Run <code>python lsl-record</code>; it should detect the marker stream from (c)
-   5. Press space bar from (c)
+   4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
+   5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Analyze-EEG-signal.ipynb for offline analysis
 2. **SSVEP + control  (online)**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab to check and then close
    3. Run 2-experiment/Training.ipynb  (do not click space yet)
-   4. Run <code>python lsl-record</code>; it should detect the marker stream from (c)
-   5. Press space bar from (c)
+   4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
+   5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  Notice it will save the trained model 
    7. Now, open the 2-experiment/Online.ipynb (do not click space yet)
    8. run <code> python online-classification.py </code> (make sure you have input the trained model, set hyperparameters)
-   9. Spacebar (g)....it should get the predicted class if the threshold exceeds
+   9. Spacebar (vii)....it should get the predicted class if the threshold exceeds
 3. **P300 + speller  (real-time)** (TBD)
 4. **MI + control   (real-time)** (TBD)
 5. **Existing Dataset (probably start with DEAP, and other famous datasets)** (TBD)
