@@ -39,6 +39,7 @@ marker_streams = resolve_byprop('type', 'Markers', timeout=2)
 if marker_streams:
     inlet_marker = StreamInlet(marker_streams[0])
     marker_time_correction = inlet_marker.time_correction()
+    print("Found Markers stream")
 else:
     inlet_marker = False
     print("Cant find Markers stream")
@@ -64,11 +65,16 @@ while (time() - t_init) < options.duration:
     try:
         data, timestamp = inlet.pull_chunk(timeout=1.0,
                                            max_samples=12)
+        # print(marker)
         if timestamp:
             res.append(data)
             timestamps.extend(timestamp)
         if inlet_marker:
             marker, timestamp = inlet_marker.pull_sample(timeout=0.0)
+            if(marker):
+                print(marker)
+            
+            # print(marker)
             if timestamp:
                 markers.append([marker, timestamp])
     except KeyboardInterrupt:
@@ -96,6 +102,6 @@ for marker in markers:
     data.loc[ix, 'Marker'] = marker[0][0]
 
 
-data.to_csv(options.filename, float_format='%.3f', index=False)
+# data.to_csv(options.filename, float_format='%.3f', index=False)
 
 print('Done !')
