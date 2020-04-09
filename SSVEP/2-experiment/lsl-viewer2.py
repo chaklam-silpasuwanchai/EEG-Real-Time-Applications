@@ -26,8 +26,9 @@ print(data)
 
 sfreq = 250
 #Channel name
-ch_names = ['O1', 'Oz', 'O2','Marker']
-ch_types = ['eeg','eeg','eeg','misc']
+# ch_names = ['O1', 'Oz', 'O2','Marker']
+ch_names = ['Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3']
+ch_types = ['eeg','eeg','eeg']
 # Create the info structure needed by MNE
 info = mne.create_info(ch_names, sfreq,ch_types=ch_types)
 
