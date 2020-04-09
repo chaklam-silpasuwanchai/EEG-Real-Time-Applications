@@ -1,4 +1,4 @@
-# BCI
+# BCI @ AIT
 
 This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective, mainly for my students at Asian Institute of Technology, ICT Department.  Particularly, this is an ongoing project and I intend to populate this with at least five examples.
 
