@@ -32,11 +32,14 @@ from filterbank import filterbank
 from scipy.stats import pearsonr
 import numpy as np
 
+#Adapted for working with python mne
+
 def fbcca(eeg, list_freqs, fs, num_harms=3, num_fbs=5):
     
     fb_coefs = np.power(np.arange(1,num_fbs+1),(-1.25)) + 0.25
-    
-    num_targs, _, num_smpls = eeg.shape  #40 taget (means 40 fre-phase combination that we want to predict)
+
+    num_targs = len(list_freqs)
+    _, _, num_smpls = eeg.shape  #40 taget (means 40 fre-phase combination that we want to predict)
     y_ref = cca_reference(list_freqs, fs, num_smpls, num_harms)
     cca = CCA(n_components=1) #initilize CCA
     
@@ -44,8 +47,8 @@ def fbcca(eeg, list_freqs, fs, num_harms=3, num_fbs=5):
     r = np.zeros((num_fbs,num_targs))
     results = np.zeros(num_targs)
     
-    for targ_i in range(num_targs):
-        test_tmp = np.squeeze(eeg[targ_i, :, :])  #deal with one target a time
+    for event in range(eeg.shape[0]):
+        test_tmp = np.squeeze(eeg[event, :, :])  #deal with one target a time
         for fb_i in range(num_fbs):  #filter bank number, deal with different filter bank
              testdata = filterbank(test_tmp, fs, fb_i)  #data after filtering
              for class_i in range(num_targs):
@@ -55,12 +58,15 @@ def fbcca(eeg, list_freqs, fs, num_harms=3, num_fbs=5):
                  # number of rows should be the same, so need transpose here
                  # output is the highest correlation linear combination of two sets
                  r_tmp, _ = pearsonr(np.squeeze(test_C), np.squeeze(ref_C)) #return r and p_value, use np.squeeze to adapt the API 
+                 if r_tmp == np.nan:
+                  r_tmp=0
                  r[fb_i, class_i] = r_tmp
                  
-        rho = np.dot(fb_coefs, r)  #weighted sum of r from all different filter banks' result
-        tau = np.argmax(rho)  #get maximum from the target as the final predict (get the index)
-        results[targ_i] = tau #index indicate the maximum(most possible) target
-    return results
+    rho = np.dot(fb_coefs, r)  #weighted sum of r from all different filter banks' result
+    print("rho: ", rho)
+    result = np.argmax(rho)
+    print("result: ", result)
+    print("correlation: ", abs(rho[result]))
 
 '''
 Generate reference signals for the canonical correlation analysis (CCA)
