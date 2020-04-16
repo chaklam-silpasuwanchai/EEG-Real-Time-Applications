@@ -33,18 +33,18 @@ Things need to take precaution:
 1. **Psychological Experiment**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab; brain microvolts should be around -10; make sure you are properly   grounded (you can close after checking)
-   3. Run 2-experiment/offline_experiment.py  (do not click space yet)
+   3. Run <code>offline_experiment.py</code>  (do not click space yet)
    4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis
 2. **SSVEP + control  (online)**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab to check and then close
-   3. Run 2-experiment/offline_experiment.py  (do not click space yet)
+   3. Run <code>offline_experiment.py</code>  (do not click space yet)
    4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  Since we are using unsupervised CCA, this file is mainly to  find the optimal parameters when used with online
-   7. run <code> python online_classifier.py </code> (make sure to do this before step 8, or else, no markers stream will be found)
+   7. run <code> python online_classifier.py </code> (make sure to do this before step (viii), or else, no markers stream will be found)
    8. Now, <code> python online_experiment.py </code>
 3. **P300 + speller  (real-time)** (TBD)
 4. **MI + control   (real-time)** (TBD)
