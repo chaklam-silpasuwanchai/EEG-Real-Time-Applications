@@ -33,14 +33,14 @@ Things need to take precaution:
 1. **Psychological Experiment**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab; brain microvolts should be around -10; make sure you are properly   grounded (you can close after checking)
-   3. Run <code>offline_experiment.py</code>  (do not click space yet)
+   3. Run <code>python offline_experiment.py</code>  (do not click space yet)
    4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis
 2. **SSVEP + control  (online)**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab to check and then close
-   3. Run <code>offline_experiment.py</code>  (do not click space yet)
+   3. Run <code>python offline_experiment.py</code>  (do not click space yet)
    4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  Since we are using unsupervised CCA, this file is mainly to  find the optimal parameters when used with online
