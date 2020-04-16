@@ -15,7 +15,7 @@ Software:
 
 All code will be centered around 3 typical steps
 1. Data acquisition (Credit: https://github.com/NeuroTechX)
-2. Experiment (stimuli) (incl. Online Classification or Training)
+2. Experiment (stimuli) (Online/Offline)
 3. Analysis
 
 Analysis will include:
