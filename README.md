@@ -19,11 +19,11 @@ All code will be centered around 3 typical steps
 3. Analysis
 
 Topics include:
-1. **Psychological Experiment** - follows typical paradigm of showing stimuli and inferring user's state based on EEG signal, typically power spectrum (e.g., alpha).  Offline analysis based.
-2. **SSVEP** - aims to create an unsupervised online classification of three targets using Filter-bank Canonical Correlation Analysis.  Since this is unsupervised, offline analysis is done mainly to identify optimal parameters (e.g., epoch width)
-3. **P300** - aims to create a 6 x 6 matrix speller using different stimuli variations; this is a supervised method in which training much be done first to identify how P300 looks like, and then use the best model for online classification
-4. **MI** - aims to create a simple left and right movement control.  Similar to P300, this is a supervised method.
-5. **Existing Dataset** - aims to perform offline analysis on typical datasets for BCI research using contemporary ML and signal processing techqniues. 
+1. **Psychological Experiment** - follows typical paradigm of showing stimuli and inferring user's state based on EEG signal, typically power spectrum (e.g., alpha).  Offline analysis based.  Useful for students to understand the basic setup of the EEG system.
+2. **SSVEP** - aims to create an unsupervised online classification of three targets using Filter-bank Canonical Correlation Analysis.  Since this is unsupervised, offline analysis is done mainly to identify optimal parameters (e.g., epoch width).  Useful for students to understand the SSVEP paradigms.
+3. **P300** - aims to create a 6 x 6 matrix speller using different stimuli variations; this is a supervised method in which training much be done first to identify how P300 looks like, and then use the best model for online classification.  Useful for students to understand how ERP works.
+4. **MI** - aims to create a simple left and right movement control.  Similar to P300, this is a supervised method.  Useful for students to understand Mu rhythms
+5. **Existing Dataset** - aims to perform offline analysis on typical datasets for BCI research using contemporary ML and signal processing techqniues.   Useful for students to understand how to apply contemporary ML techniques.
 
 Things need to take precaution:
 - To get a clean signal, it is important to **stay at a location free of electric artifacts**.  When you look at your brain signals using lsl-viewer, it should be around low frequency, around -10 or less.  If it is more, try make sure your feet/hand is touching the ground and see whether the volts changes.  Also, if your bluetooth receiver is near the power outlet, it can also increase the frequency significantly.  Try move to different locations that are free of power influences.  Last, even your feet/hand is grounded, make sure no electricity is on the ground!, e.g., leaving some plugs on the ground
