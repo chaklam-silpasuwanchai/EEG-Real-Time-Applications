@@ -192,6 +192,6 @@ help_str = """
            """
 print(help_str)
 lslv.start()
-
+plt.ioff()
 plt.show()
 lslv.stop()
