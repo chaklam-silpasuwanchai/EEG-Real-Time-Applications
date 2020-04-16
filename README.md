@@ -24,25 +24,27 @@ Analysis will include:
 3. Long Short-Term Memory Recurrent Neural network
 4. Temporal Convolutional Network
 
+Things need to take precaution:
+- To get a clean signal, it is important to stay at a location free of electric artifacts.  When you look at your brain signals using lsl-viewer, it should be around low frequency, around -10 or less.  If it is more, try make sure your feet/hand is touching the ground and see whether the volts changes.  Also, if your bluetooth receiver is near the power outlet, it can also increase the frequency significantly.  Try move to different locations that are free of power influences.  Last, even your feet/hand is grounded, make sure no electricity is on the ground!, e.g., leaving some plugs on the ground
+
 ## Topics
 
 1. **Psychological Experiment**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab; brain microvolts should be around -10; make sure you are properly   grounded (you can close after checking)
-   3. Run 2-experiment/Presents-stimuli.ipynb  (do not click space yet)
+   3. Run 2-experiment/offline_experiment.py  (do not click space yet)
    4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
-   6. Data can be found in 3-analysis/data; Open Analyze-EEG-signal.ipynb for offline analysis
+   6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis
 2. **SSVEP + control  (online)**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab to check and then close
-   3. Run 2-experiment/Training.ipynb  (do not click space yet)
+   3. Run 2-experiment/offline_experiment.py  (do not click space yet)
    4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
-   6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  Notice it will save the trained model 
-   7. Now, open the 2-experiment/Online.ipynb (do not click space yet)
-   8. run <code> python online-classification.py </code> (make sure you have input the trained model, set hyperparameters)
-   9. Spacebar (vii)....it should get the predicted class if the threshold exceeds
+   6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  Since we are using unsupervised CCA, this file is mainly to  find the optimal parameters when used with online
+   7. run <code> python online_classifier.py </code> (make sure to do this before step 8, or else, no markers stream will be found)
+   8. Now, <code> python online_experiment.py </code>
 3. **P300 + speller  (real-time)** (TBD)
 4. **MI + control   (real-time)** (TBD)
 5. **Existing Dataset (probably start with DEAP, and other famous datasets)** (TBD)
