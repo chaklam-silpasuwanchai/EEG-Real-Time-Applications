@@ -21,8 +21,9 @@ All code will be centered around 3 typical steps
 Analysis will include:
 1. Basic feature extraction and classification
 2. Common Spatial Pattern and classification
-3. Long Short-Term Memory Recurrent Neural network
-4. Temporal Convolutional Network
+3. Filter-Bank Canonical Correlation Analysis for SSVEP
+4. Long Short-Term Memory Recurrent Neural network
+5. Temporal Convolutional Network
 
 Things need to take precaution:
 - To get a clean signal, it is important to stay at a location free of electric artifacts.  When you look at your brain signals using lsl-viewer, it should be around low frequency, around -10 or less.  If it is more, try make sure your feet/hand is touching the ground and see whether the volts changes.  Also, if your bluetooth receiver is near the power outlet, it can also increase the frequency significantly.  Try move to different locations that are free of power influences.  Last, even your feet/hand is grounded, make sure no electricity is on the ground!, e.g., leaving some plugs on the ground
