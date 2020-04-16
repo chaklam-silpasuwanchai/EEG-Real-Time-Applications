@@ -13,6 +13,7 @@ from fbcca import fbcca_realtime
 #defining the marker
 info = StreamInfo('MarkerStream', 'Markers', 1, 0, 'int32', 'myuidw43536')
 outlet = StreamOutlet(info)  #for sending the predicted classes
+outlet.push_sample([0])  #initialized the stream so others can find
 
 #defining the stream data format
 sfreq = 250

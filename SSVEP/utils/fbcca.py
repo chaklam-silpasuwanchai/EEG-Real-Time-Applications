@@ -167,6 +167,6 @@ def fbcca_realtime(eeg, list_freqs, fs, num_harms=3, num_fbs=5):
     print("====Most recurrent class: ====", r_mode)
     print("====Average correlation: =====", r_corr_avg)
 
-    THRESHOLD = 0.7
+    THRESHOLD = 0.3
     if r_corr_avg >= THRESHOLD:  # 2.749=np.sum(fb_coefs*0.85)
         return r_mode  # if the correlation isn't big enough, do not return any command
