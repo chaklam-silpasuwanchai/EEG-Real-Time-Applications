@@ -10,7 +10,7 @@ from psychopy.visual import ShapeStim
 from pylsl import StreamInlet, resolve_byprop
 import threading
 
-# %%
+%%
 print("looking for a Markers stream...")
 marker_streams = resolve_byprop('type', 'Markers')
 if marker_streams:
@@ -34,9 +34,6 @@ def marker_result():
     return marker
 
 # %%
-#def marker_result():
- #   marker, timestamp = inlet_marker.pull_sample()
- #  return marker[0]
 
 # %%
 #Author: Apiporn Simapornchai
@@ -48,8 +45,8 @@ def stimuli_blinking_nonstop(frame_on1, frame_off1, frame_on2, frame_off2, frame
     global flipCount
     
     while True:
-        if flipCount == 59:
-            flipCount = 0
+        # if flipCount == 59:
+        #     flipCount = 0
         if(flipCount == 0 or (flipCount%frame_on1 ==0 and flipCount%(frame_on1*2) !=0)):
             shapes[0].setAutoDraw(True)
             shapes[1].setAutoDraw(False)
@@ -71,18 +68,18 @@ def stimuli_blinking_nonstop(frame_on1, frame_off1, frame_on2, frame_off2, frame
             shapes[5].setAutoDraw(True)
             shapes[4].setAutoDraw(False)
 
-        time = trialclock.getTime()
+        # time = trialclock.getTime()
 
-        for frameN in range(looptime):
-            mywin.flip()
-            flipCount+=1
+        # for frameN in range(looptime):
+        mywin.flip()
+        flipCount+=1
 
-        result = marker_result()
-        if(result):
-            print("Marker received: ", result[0][0])
-            arrow.setAutoDraw(False)
-            arrow = ShapeStim(mywin, vertices=arrowVert, fillColor='darkred', size=.2, lineColor='red', pos=arrowSequence[result[0][0]])
-            arrow.setAutoDraw(True)
+        # result = marker_result()
+        # if(result):
+        #     print("Marker received: ", result[0][0])
+        #     arrow.setAutoDraw(False)
+        #     arrow = ShapeStim(mywin, vertices=arrowVert, fillColor='darkred', size=.2, lineColor='red', pos=arrowSequence[result[0][0]])
+        #     arrow.setAutoDraw(True)
             #mywin.flip()
             #core.wait(2.0)
 
@@ -96,7 +93,7 @@ def stimuli_blinking_nonstop(frame_on1, frame_off1, frame_on2, frame_off2, frame
 #setting params
 mywin = visual.Window([1920, 1080], fullscr=False)
 
-test_freq = [6, 11, 15]  #, 15]
+test_freq = [6, 10, 16]  #, 15]
 freq_len = len(test_freq)
 
 frame_on1, frame_off1 = getFrames(test_freq[0])
