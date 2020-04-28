@@ -10,7 +10,7 @@ from psychopy.visual import ShapeStim
 from pylsl import StreamInlet, resolve_byprop
 import threading
 
-%%
+#%%
 print("looking for a Markers stream...")
 marker_streams = resolve_byprop('type', 'Markers')
 if marker_streams:
@@ -74,14 +74,14 @@ def stimuli_blinking_nonstop(frame_on1, frame_off1, frame_on2, frame_off2, frame
         mywin.flip()
         flipCount+=1
 
-        # result = marker_result()
-        # if(result):
-        #     print("Marker received: ", result[0][0])
-        #     arrow.setAutoDraw(False)
-        #     arrow = ShapeStim(mywin, vertices=arrowVert, fillColor='darkred', size=.2, lineColor='red', pos=arrowSequence[result[0][0]])
-        #     arrow.setAutoDraw(True)
-            #mywin.flip()
-            #core.wait(2.0)
+        result = marker_result()
+        if(result):
+            print("Marker received: ", result[0][0])
+            arrow.setAutoDraw(False)
+            arrow = ShapeStim(mywin, vertices=arrowVert, fillColor='darkred', size=.2, lineColor='red', pos=arrowSequence[result[0][0]])
+            arrow.setAutoDraw(True)
+            mywin.flip()
+            core.wait(2.0)
 
         if 'escape' in event.getKeys():
                 core.quit()

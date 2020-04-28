@@ -32,7 +32,7 @@ class P300Window(object):
         self.flash_mode = 2  #single element  #1 for columns and rows; currently is NOT working yet; if I have time, will revisit
         self.flash_duration = 100  #soa
         self.break_duration = 250  #iti
-        self.set_of_repetition = 3
+        self.set_of_repetition = 12
         self.number_of_flashes_per_repetition = 10
         self.total_repetitions_per_trial = self.set_of_repetition * self.number_of_flashes_per_repetition  #30 repetitions per letters
 
@@ -197,6 +197,7 @@ class P300Window(object):
         self.highlight_image(image_index)
         self.start_btn.configure(state='disabled')
         self.pause_btn.configure(state='normal')
+        self.master.quit
 
     def pause(self):
         self.running = 0

@@ -23,7 +23,7 @@ info = mne.create_info(ch_names, sfreq, ch_types = ch_types)
 host = 'OpenBCItestEEG'
 
 ######HYPERPARAMETERS
-epoch_width = 3.5
+epoch_width = 3.5  #2.6
 waittime = 0.2
 threshold = 4  #3 out of 5 epochs
 num_of_epochs = 5
@@ -37,6 +37,8 @@ arrayData = []  #for keeping the results
 def runRT(count):
 	with LSLClient(info=info, host=host, wait_max=3) as client:
 		#print("data to array:",count, "  Start Time:",a-time.time())
+
+
 		epoch = client.get_data_as_epoch(n_samples=epoch_chunks)
 		#print("data to array:",count, "  End Time:",a-time.time())
 		epoch.filter(4, 77, method='iir')
