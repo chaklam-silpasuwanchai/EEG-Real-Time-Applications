@@ -8,7 +8,7 @@ Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
 ## About
 
 Hardware:
-- OpenBCI + Cyton/Daisy, 250Hz
+- OpenBCI + Cyton, 250Hz
 
 Software:
 - Python-based
