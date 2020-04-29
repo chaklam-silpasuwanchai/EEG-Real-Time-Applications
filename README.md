@@ -11,7 +11,7 @@ Hardware:
 - OpenBCI + Cyton, 250Hz
 
 Software:
-- Python-based
+- Python
 
 All code will be centered around 3 typical steps
 1. Data acquisition (Credit: https://github.com/NeuroTechX)
