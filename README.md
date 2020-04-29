@@ -15,8 +15,8 @@ Software:
 
 All code will be centered around 3 typical steps
 1. Data acquisition (Credit: https://github.com/NeuroTechX)
-2. Experiment (stimuli) (Online/Offline)
-3. Analysis
+2. Experiment (stimuli) (Online/Offline experiment)
+3. Analysis (Offline analysis)
 
 Topics include:
 1. **Psychological Experiment** - follows typical paradigm of showing stimuli and inferring user's state based on EEG signal, typically power spectrum (e.g., alpha).  Offline analysis based.  Useful for students to understand the basic setup of the EEG system.
