@@ -7,7 +7,7 @@ import tkinter.font as tkFont
 
 import numpy as np
 from PIL import ImageTk, Image
-from pylsl import StreamInfo, StreamOutlet, local_clock, IRREGULAR_RATE
+from pylsl import StreamInfo, StreamOutlet, local_clock, IRREGULAR_RATE, StreamInlet, resolve_byprop
 
 import random
 import string
@@ -28,14 +28,9 @@ class P300Window(object):
         self.flash_image_path = '../utils/images/flash_images/einstein.jpg'
         self.number_of_rows = 6
         self.number_of_columns = 6  #make sure you have 6 x 6 amount of images in the images_folder_path
-        self.lsl_streamname = 'P300_stream'
         self.flash_mode = 2  #single element  #1 for columns and rows; currently is NOT working yet; if I have time, will revisit
         self.flash_duration = 100  #soa
-        self.break_duration = 250  #iti
-        self.set_of_repetition = 12
-        self.number_of_flashes_per_repetition = 10
-        self.total_repetitions_per_trial = self.set_of_repetition * self.number_of_flashes_per_repetition  #30 repetitions per letters
-
+        self.break_duration = 125  #iti
 
         self.trials = 6 #number of letters
         self.delay = 2500 #interval between trial
@@ -62,14 +57,29 @@ class P300Window(object):
         self.start_btn_text = StringVar()
         self.start_btn_text.set('Start')
         self.start_btn = Button(self.master, textvariable=self.start_btn_text, command=self.start)
-        self.start_btn.grid(row=self.number_of_rows + 2, column=self.number_of_columns - 1)
+        self.start_btn.grid(row=self.number_of_rows + 3, column=self.number_of_columns - 1)
 
         self.pause_btn = Button(self.master, text='Pause', command=self.pause)
-        self.pause_btn.grid(row=self.number_of_rows + 2, column=self.number_of_columns - 4)  #-4 for center
+        self.pause_btn.grid(row=self.number_of_rows + 3, column=self.number_of_columns - 4)  #-4 for center
         self.pause_btn.configure(state='disabled')
 
         self.close_btn = Button(self.master, text='Close', command=master.quit)
-        self.close_btn.grid(row=self.number_of_rows + 2, column=0)
+        self.close_btn.grid(row=self.number_of_rows + 3, column=0)
+
+        fontStyle = tkFont.Font(family="Courier", size=40)
+        
+        self.output = Text(root, height=1, font=fontStyle)
+        self.output.tag_configure("red", foreground="red")
+        self.output.tag_configure("green", foreground="green")
+        self.output.configure(width=10)
+        self.output.insert("end", "  ")
+        self.output.grid(row=self.number_of_rows + 2, column=self.number_of_columns - 4)
+
+        self.outputlabel = Label(root, text="Output: ", font=fontStyle)
+        self.outputlabel.grid(row=self.number_of_rows + 2, column=self.number_of_columns - 5)
+
+        self.targetlabel = Label(root, text="Target: ", font=fontStyle)
+        self.targetlabel.grid(row=self.number_of_rows + 1, column=self.number_of_columns - 5)
 
         self.show_highlight_letter(0)
 
@@ -135,66 +145,37 @@ class P300Window(object):
                 self.image_labels.append(label)
 
     def create_lsl_output(self):
+
         """Creates an LSL Stream outlet"""
-        info = StreamInfo(name=self.lsl_streamname, type='Markers',
-                          channel_count=1, channel_format='int8', nominal_srate=IRREGULAR_RATE,
-                          source_id='marker_stream', handle=None)
+        info = StreamInfo(name='LetterMarkerStream', type='LetterFlashMarkers',
+                  channel_count=1, channel_format='int8', nominal_srate=IRREGULAR_RATE,
+                  source_id='lettermarker_stream', handle=None)
 
-        if self.flash_mode == 1:
-            info.desc().append_child_value('flash_mode', 'Row and Column')
-        elif self.flash_mode == 2:
-            info.desc().append_child_value('flash_mode', 'Single Value')
-
-        info.desc().append_child_value('num_rows', str(self.number_of_rows))
-        info.desc().append_child_value('num_cols', str(self.number_of_columns))
-
-        return StreamOutlet(info)
+        return StreamOutlet(info)  #for sending the predicted classes
 
     def create_flash_sequence(self):
         self.flash_sequence = []
         num_rows = self.number_of_rows
         num_cols = self.number_of_columns
+        maximum_number = num_rows * num_cols
 
-        if self.flash_mode == 1:
-            print('CAUTION: Row and Column flash mode currently uses only random samples!')
-            self.flash_sequence = np.random.randint(0, num_rows + num_cols, 3000) #3000 should be enough
-        elif self.flash_mode == 2:
-            maximum_number = num_rows * num_cols
-            for i in range(len(self.word)):
-                for j in range(self.set_of_repetition):  #generate three sets
-                    seq = list(range(maximum_number))  #generate 0 to maximum_number
-                    random.shuffle(seq)  #shuffle
-      
-                    index = string.ascii_lowercase.index(self.word[i])
-                    allowed_values = list(range(0, maximum_number))
-                    allowed_values.remove(index)  #reduce number of flashed by first excluding the actual letter
-                    #print("Index: ", index)
+        flash_sequence = []
 
-                    while(len(seq) > self.number_of_flashes_per_repetition):  #cut down array until there is only 10 values
-                        choice = random.choice(allowed_values)
-                        if choice in seq:
-                            seq.remove(choice)
-
-                    #make sure no repeating element in consecutive order
-                    #the consecutive happens when we combine the next array, thus we simply check the tail of seq and head of the array
-                    try:
-                        if seq[0] == flash_sequence[-1]:
-                            seq[0], seq[-6] = seq[-6], seq[0]   #swap the consecutive to some other places, here i choose -6
-                    except NameError:
-                        flash_sequence = []
-                    flash_sequence.extend(seq)
+        for i in range(10000):
+            seq = list(range(maximum_number))  #generate 0 to maximum_number
+            random.shuffle(seq)  #shuffle
+            flash_sequence.extend(seq)
 
         self.flash_sequence = flash_sequence
 
-
     def start(self):
+        self.read_lsl_marker()
         self.running = 1
         letter = self.word[0]
         image_index = string.ascii_lowercase.index(letter)
         self.highlight_image(image_index)
         self.start_btn.configure(state='disabled')
         self.pause_btn.configure(state='normal')
-        self.master.quit
 
     def pause(self):
         self.running = 0
@@ -214,40 +195,44 @@ class P300Window(object):
             print('Flashing paused at sequence number ' + str(self.sequence_number))
             return
 
+        result = self.marker_result()
+        if(result):
+            print("Marker received: ", result[0][0])
+            receive = result[0][0]
+        else:
+            receive = 0    
+
         element_to_flash = self.flash_sequence[self.sequence_number]
         letter = self.word[self.letter_idx]
         image_index = string.ascii_lowercase.index(letter)
 
         #pushed markers to LSL stream
         timestamp = local_clock()
-        if(element_to_flash == image_index):
-            print("Pushed to the LSL: ", "Marker: ", [2], "; Timestamp: ", timestamp, "Seq: ", self.sequence_number, 
-                "Target letter - [Letter#]: ",  self.letter_idx, " [Image index]: ", image_index, " [Character]: ", letter, "Flash element: ", element_to_flash)
-            self.lsl_output.push_sample([2], timestamp)  #2 for targets
+        print("Letter: ", image_index, " Element flash: ", [element_to_flash + 1], timestamp)
+        self.lsl_output.push_sample([element_to_flash + 1], timestamp)  # add 1 to prevent 0 in markers
+        self.flash_single_element(element_to_flash)
+
+        if not(receive):
+            self.master.after(self.break_duration, self.start_flashing)
         else:
-            #print("Pushed to the LSL: ", "Marker: ", [1], "; Timestamp: ", timestamp)
-            self.lsl_output.push_sample([1], timestamp)  #1 for non-targets
-
-        #flashing
-        if self.flash_mode == 1:
-            self.flash_row_or_col(element_to_flash)
-        elif self.flash_mode == 2:
-            self.flash_single_element(element_to_flash)
-
-
-        if(self.letter_idx < len(self.word)):
-            if((self.sequence_number + 1) % self.total_repetitions_per_trial == 0):  #every self.repetitions, change letter (0 - 29, 30 - 59, 60 - 89 etc.)
-                self.letter_idx += 1
-                if(self.letter_idx == len(self.word)):
-                    return
-                letter = self.word[self.letter_idx]
-                image_index = string.ascii_lowercase.index(letter)
-                self.master.after(self.break_duration, self.highlight_target, image_index)
+            if((image_index + 1) == receive):
+                self.output.insert("end", self.pos_to_char(receive), "green")
             else:
-                self.master.after(self.break_duration, self.start_flashing)
+                self.output.insert("end", self.pos_to_char(receive), "red")
+
+            self.letter_idx += 1
+            if(self.letter_idx == len(self.word)):
+                return
+            letter = self.word[self.letter_idx]
+            image_index = string.ascii_lowercase.index(letter)
+            self.master.after(self.break_duration, self.highlight_target, image_index)
+                
 
         self.sequence_number = self.sequence_number + 1  #change flash position
 
+
+    def pos_to_char(self, pos):
+        return chr(pos -1 + 97)
 
     def highlight_target(self, image_index):
         self.show_highlight_letter(self.letter_idx)
@@ -322,6 +307,17 @@ class P300Window(object):
     def unflash_single_element(self, element_no):
         self.change_image(self.image_labels[element_no], self.usable_images[element_no])
 
+    def marker_result(self):
+        marker, timestamp = self.inlet_marker.pull_chunk()
+        return marker
+
+    def read_lsl_marker(self):
+        print("looking for a Markers stream...")
+        marker_streams = resolve_byprop('name', 'ResultMarkerStream')
+        if marker_streams:
+            self.inlet_marker = StreamInlet(marker_streams[0])
+            marker_time_correction = self.inlet_marker.time_correction()
+            print("Found Markers stream")
 
 root = Tk()
 main_window = P300Window(root)
