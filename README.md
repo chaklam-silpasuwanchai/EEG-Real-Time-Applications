@@ -1,6 +1,6 @@
 # BCI @ AIT
 
-This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective, mainly for my students at Asian Institute of Technology, ICT Department.  It is intended only for research and academic purpose. This is an ongoing project and I intend to populate this with at least five topics (see below).
+This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective, mainly for my students at Asian Institute of Technology, ICT Department.  It is intended only for research and academic purpose. This is an ongoing project and I intend to populate this with at least six topics (see below).
 
 Contributors:
 Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
@@ -8,15 +8,15 @@ Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
 ## About
 
 Hardware:
-- OpenBCI + Cyton/Daisy, 250Hz
+- OpenBCI + Cyton, 250Hz
 
 Software:
-- Python-based
+- Python
 
 All code will be centered around 3 typical steps
 1. Data acquisition (Credit: https://github.com/NeuroTechX)
-2. Experiment (stimuli) (Online/Offline)
-3. Analysis
+2. Experiment (stimuli) (Online/Offline experiment)
+3. Analysis (Offline analysis)
 
 Topics include:
 1. **Psychological Experiment** - follows typical paradigm of showing stimuli and inferring user's state based on EEG signal, typically power spectrum (e.g., alpha).  Offline analysis based.  Useful for students to understand the basic setup of the EEG system.
