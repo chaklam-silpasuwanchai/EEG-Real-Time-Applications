@@ -207,9 +207,9 @@ class P300Window(object):
         image_index = string.ascii_lowercase.index(letter)
 
         #pushed markers to LSL stream
-        timestamp = local_clock()
-        print("Letter: ", image_index, " Element flash: ", [element_to_flash + 1], timestamp)
-        self.lsl_output.push_sample([element_to_flash + 1], timestamp)  # add 1 to prevent 0 in markers
+
+        print("Letter: ", image_index, " Element flash: ", [element_to_flash + 1])
+        self.lsl_output.push_sample([element_to_flash + 1])  # add 1 to prevent 0 in markers
         self.flash_single_element(element_to_flash)
 
         if not(receive):

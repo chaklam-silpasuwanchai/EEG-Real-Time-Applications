@@ -6,6 +6,8 @@ from time import time, sleep
 import threading
 from scipy import stats
 import sys
+from itertools import chain
+
 
 #defining the marker
 info = StreamInfo(name='ResultMarkerStream', type='ResultMarkers',
@@ -27,7 +29,7 @@ num_cols = 6
 min_markers = num_rows * num_cols
 
 ######HYPERPARAMETERS
-epoch_width = 3  #2.6
+epoch_width = 2  #2.6
 waittime = 0.2
 tmin = int(sfreq/1000 * 200) # start from  sfreq / total milisec   *  milisec
 tmax = int(sfreq/1000 * 500) # end at      sfreq / total milisec   *  milisec
@@ -38,99 +40,153 @@ epoch_chunks = int(np.round(sfreq * epoch_width))  #freq * 2.6seconds
 
 arrayEEGData =[]  #for keeping the incoming EEG data
 arrayMarkerData = []  #incoming marker data
-epochArray = []  #combining eegs and corresponding marker that has already been windowed
-scores = []  #
+
+scorelist = []
 
 def start(count):
     x= threading.Thread(target = startEEG, args=())
     y= threading.Thread(target = startMarker, args=())
     x.start()
     y.start()
-    x.join()
+    x.join()  #wait until x and y finishes
     y.join()
     mapMarkerToEEG(count)
-    epochArray = makeEpochs(count)
-    classify(epochArray)
+    classify(makeEpochs(count))
 
 def startEEG():
     eeg, eeg_time = eeg_input()
+    #eeg = [ [eeg sample1], [eeg sample 2], .....250]
+    #eeg_time [ [eeg sample time], [eeg sample time 2], .....250]
+    print("EEG received length: ", len(eeg))
+    print("EEG time received length: ", len(eeg_time))
     arrayEEGData.append([eeg,eeg_time])
-   
+
+
 def startMarker():
     marker, timestamp = marker_input()
+    print("Marker received: ", marker)
     arrayMarkerData.append([marker, timestamp])
 
 def mapMarkerToEEG(count):
+
+    print("Mapping marker to EEG....")
    
+    #arrayEEGData
     # 0 -> EEG Data
     # 1 -> Timestamp
     # 2 -> markerData
+    #arrayMarkerData
+    # 0 -> markerdata
+    # 1 -> timestamp
     #create marker data container
     emptyList = [0]* len(arrayEEGData[count][0])
     arrayEEGData[count].append(emptyList)  #add the third dimension [2] as marker
-
+    
     timestamps = np.array(arrayEEGData[count][1])
 
-    for i in range(len(arrayMarkerData[count][0])):
-        
-        # market time at i
-        markerTime = arrayMarkerData[count][1][i] 
-        markerData  = arrayMarkerData[count][0][i][0]   #marker is a list, so require [0]
+    print("First 5 EEG timestamps: ", timestamps[0:5])
+    print("Last 5 EEG timestamps: ", timestamps[-5:])
+    if(len(arrayMarkerData[count][1]) > 10):
+        print("Start 5 marker timestamps: ", arrayMarkerData[count][1][0:5])
+        print("Start offset: ", timestamps[0:5] - arrayMarkerData[count][1][0:5])
+        print("End 5 marker timestamps: ", arrayMarkerData[count][1][-5:])
+        print("End offset: ", timestamps[-5:] - arrayMarkerData[count][1][-5:])
 
-        # find index of marker by finding the smallest differences of one marker against all EEG timestamps
-        ix = np.argmin(np.abs(markerTime - timestamps))
-        
-        #assign marker data to the closest time
-        arrayEEGData[count][2][ix] = markerData
+
+    if(arrayMarkerData[count][1]):
+        for i in range(len(arrayMarkerData[count][0])):
+            #print("i: ", i)
+            
+            # market time at i
+            markerTime = arrayMarkerData[count][1][i] 
+            markerData  = arrayMarkerData[count][0][i][0]   #marker is a list, so require [0]
+
+            # find index of marker by finding the smallest differences of one marker against all EEG timestamps
+            ix = np.argmin(np.abs(markerTime - timestamps))
+            
+            print("Maker: ", markerData, " got mapped to index: ", ix)
+
+            #assign marker data to the closest time
+            arrayEEGData[count][2][ix] = markerData
+
+            # print("EEG data mapped to marker: ", arrayEEGData[count][0][ix])
+            # print("EEG timestamp mapped to marker: ", arrayEEGData[count][1][ix])
+
 
 def makeEpochs(count):
 
-    score = np.zeros(36)
+    epochArray = []  #combining eegs and corresponding marker that has already been windowed
 
-    for i in range(len(arrayEEGData[count][2])-tmax):   #-tmax so we make sure this data can be windowed
+    print("Making epochs....")
+
+    for i in range(len(arrayEEGData[count][2])-tmax):   #-tmax so we make sure this data can be epoched
         markerData = arrayEEGData[count][2][i]
-
         #any eeg data containing marker !=0 from tmin to  tmax is extracted
         if(markerData>0):
+            print("Created epoch for marker# : ", markerData)
             eegData = arrayEEGData[count][0][i+tmin:i+tmax]
             epochArray.append([eegData,markerData])
 
+    return epochArray
+
+#epochArray = [ [eeg, marker], [eeg, marker] ] where eeg = [[8 data], [8 data]]
 def classify(epochArray):
 
-    #epochArray = [ [many set of 8 channel eeg data], marker]
-    #first extract the mean of variances
-    for i in range(len(epochArray)):
-        markerPos = epochArray[i][1]-1  #make it 0 by -1
-        var = np.var(epochArray[i][0],axis=0)  #get variance along columns
-        mean = np.mean(var) #get total mean 
+    print("Classifying....")
 
-        if(score[markerPos]==0):
-            score[markerPos] = mean
-        else:
-            score[markerPos] = (score[markerPos]+mean)/2
+    print("Epoch array length (i.e., how many event markers): ", len(epochArray))
 
-    scores.append(score)
+    mean_var = []
 
-    #wait until we got at least 10 scores
-    if(len(scores)>10):
-        res = np.mean(epochArrayTestAll[-10:],axis=0)  #get the last 10 results
-        candidate = np.argmax(res)
-        print("Candidate Letter: ", pos_to_char(np.argmax(res)))  #find the maximum scores and convert to char
-        #if it pass certain threshold, will 
-            #outlet.push_sample([candidate])
+    epochnp = np.array(epochArray)
+
+    #loop through 36 markers start from 1 to 36
+    if(epochnp.size > 0):
+        for i in np.arange(1,37):
+            cond = epochnp[:, 1] == i
+            selected_epochs_eeg =epochnp[cond][:, 0]
+            #flat out the lists of list, and take mean
+            flat_list = list(chain(*selected_epochs_eeg))
+            mean = np.mean(flat_list, axis=0)  #mean across all samples  
+            var = np.var(flat_list, axis=0)    #var across all samples        
+            mean_var.append([mean, var])
+            
+        scores = []
+        for i, (mean, var) in enumerate(mean_var):
+            m = np.mean(mean)  #mean across all channels
+            v = np.mean(var)
+            if not(np.isnan(v)):
+                scores.append(v)  #simply use variances as scores (we may want to use more fancy disrimant analysis later)
+            else:
+                scores.append(0)
+
+        print("Epoch score: ", scores)
+
+        scorelist.append(scores)
+
+        # #wait until we got at least 10 scores
+        if(len(scorelist) > 9):
+            res = np.mean(scorelist[-10:], axis=0)
+            print("Last 10 epoch scores mean: ", res)
+            candidate = np.argmax(res)
+            print("Candidate index (argmax): ", candidate)
+            print("Candidate Letter: ", pos_to_char(np.argmax(res)))  #find the maximum scores and convert to char
+        #     #if it pass certain threshold, will 
+        #         #outlet.push_sample([candidate])
+    else:
+        print("Waiting for more markers....")
 
 def marker_input():
-    marker, timestamp = inlet_marker.pull_chunk(timeout=1, max_samples=100)
+    marker, timestamp = inlet_marker.pull_chunk(timeout=3, max_samples=epoch_chunks)
     return marker, timestamp
 
 def eeg_input():
-    with LSLClient(info=info, host=host, wait_max=2) as client:
-        eeg, timestamp =  client.client.pull_chunk(timeout=1, max_samples=epoch_chunks)
+    with LSLClient(info=info, host=host, wait_max=10) as client:
+        eeg, timestamp =  client.client.pull_chunk(timeout=2.5, max_samples=epoch_chunks)
         return eeg, timestamp
 
 def pos_to_char(pos):
     return chr(pos+ 97)
-
 
 #start code
 print("looking for an EEG stream...")
