@@ -42,9 +42,9 @@ epochArray = []  #combining eegs and corresponding marker that has already been 
 scores = []  #
 
 def start(count):
-    t = time()
-    x= threading.Thread(target = startEEG, args=(t,))
-    y= threading.Thread(target = startMarker, args=(t,))
+    time_start = time()
+    x= threading.Thread(target = startEEG, args=(time_start,count,))
+    y= threading.Thread(target = startMarker, args=(time_start,count,))
     x.start()
     y.start()
     x.join()
@@ -53,17 +53,17 @@ def start(count):
     epochArray = makeEpochs(count)
     classify(epochArray)
 
-def startEEG(t):
-    print("Start EEG",t-time())
+def startEEG(time_start):
+    print(count,": Start EEG",time_start-time())
     eeg, eeg_time = eeg_input()
     arrayEEGData.append([eeg,eeg_time])
-    print("Stop EEG",t - time())
+    print(count,": Stop EEG",time_start - time())
 
-def startMarker(t):
-    print("Start Marker",t - time())
+def startMarker(time_start):
+    print(count,": Start Marker",time_start - time())
     marker, timestamp = marker_input()
     arrayMarkerData.append([marker, timestamp])
-    print("Stop Marker",t - time())
+    print(count,": Stop Marker",time_start - time())
 
 def mapMarkerToEEG(count):
 
