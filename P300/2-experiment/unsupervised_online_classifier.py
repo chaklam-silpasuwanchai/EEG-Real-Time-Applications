@@ -62,7 +62,7 @@ def startEEG(time_start):
     print(count,": Stop EEG",time_start - time())
 
 def startMarker(time_start):
-    sleep(math.abs(eeg_time_correction)- math.abs(marker_time_correction)) # delay the marker input according to the eeg delayed time and marker delay
+    sleep(math.abs(eeg_time_correction - marker_time_correction)) # delay the marker input according to the eeg delayed time and marker delay
     print(count,": Start Marker",time_start - time())
     marker, timestamp = marker_input()
     arrayMarkerData.append([marker, timestamp])
