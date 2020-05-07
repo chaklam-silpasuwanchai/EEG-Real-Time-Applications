@@ -4,6 +4,7 @@ import mne as mne
 from pylsl import StreamInfo, StreamOutlet, local_clock, IRREGULAR_RATE, StreamInlet, resolve_byprop
 from time import time, sleep
 import threading
+import math
 from scipy import stats
 import sys
 
@@ -53,6 +54,7 @@ def start(count):
     epochArray = makeEpochs(count)
     classify(epochArray)
 
+
 def startEEG(time_start):
     print(count,": Start EEG",time_start-time())
     eeg, eeg_time = eeg_input()
@@ -60,6 +62,7 @@ def startEEG(time_start):
     print(count,": Stop EEG",time_start - time())
 
 def startMarker(time_start):
+    sleep(math.abs(eeg_time_correction)- math.abs(marker_time_correction)) # delay the marker input according to the eeg delayed time and marker delay
     print(count,": Start Marker",time_start - time())
     marker, timestamp = marker_input()
     arrayMarkerData.append([marker, timestamp])
@@ -147,7 +150,7 @@ if len(streams) == 0:
 print("Start aquiring data")
 inlet = StreamInlet(streams[0], max_chunklen=epoch_chunks)
 eeg_time_correction = inlet.time_correction()
-
+marker_time_correction = 0
 print("looking for a Markers stream...")
 marker_streams = resolve_byprop('name', 'LetterMarkerStream')
 if marker_streams:
