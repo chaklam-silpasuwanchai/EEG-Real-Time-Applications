@@ -42,8 +42,9 @@ epochArray = []  #combining eegs and corresponding marker that has already been 
 scores = []  #
 
 def start(count):
-    x= threading.Thread(target = startEEG, args=())
-    y= threading.Thread(target = startMarker, args=())
+    t = time()
+    x= threading.Thread(target = startEEG, args=(t,))
+    y= threading.Thread(target = startMarker, args=(t,))
     x.start()
     y.start()
     x.join()
@@ -52,16 +53,20 @@ def start(count):
     epochArray = makeEpochs(count)
     classify(epochArray)
 
-def startEEG():
+def startEEG(t):
+    print("Start EEG",t-time())
     eeg, eeg_time = eeg_input()
     arrayEEGData.append([eeg,eeg_time])
-   
-def startMarker():
+    print("Stop EEG",t - time())
+
+def startMarker(t):
+    print("Start Marker",t - time())
     marker, timestamp = marker_input()
     arrayMarkerData.append([marker, timestamp])
+    print("Stop Marker",t - time())
 
 def mapMarkerToEEG(count):
-   
+
     # 0 -> EEG Data
     # 1 -> Timestamp
     # 2 -> markerData
@@ -72,14 +77,14 @@ def mapMarkerToEEG(count):
     timestamps = np.array(arrayEEGData[count][1])
 
     for i in range(len(arrayMarkerData[count][0])):
-        
+
         # market time at i
-        markerTime = arrayMarkerData[count][1][i] 
+        markerTime = arrayMarkerData[count][1][i]
         markerData  = arrayMarkerData[count][0][i][0]   #marker is a list, so require [0]
 
         # find index of marker by finding the smallest differences of one marker against all EEG timestamps
         ix = np.argmin(np.abs(markerTime - timestamps))
-        
+
         #assign marker data to the closest time
         arrayEEGData[count][2][ix] = markerData
 
@@ -102,7 +107,7 @@ def classify(epochArray):
     for i in range(len(epochArray)):
         markerPos = epochArray[i][1]-1  #make it 0 by -1
         var = np.var(epochArray[i][0],axis=0)  #get variance along columns
-        mean = np.mean(var) #get total mean 
+        mean = np.mean(var) #get total mean
 
         if(score[markerPos]==0):
             score[markerPos] = mean
@@ -116,7 +121,7 @@ def classify(epochArray):
         res = np.mean(epochArrayTestAll[-10:],axis=0)  #get the last 10 results
         candidate = np.argmax(res)
         print("Candidate Letter: ", pos_to_char(np.argmax(res)))  #find the maximum scores and convert to char
-        #if it pass certain threshold, will 
+        #if it pass certain threshold, will
             #outlet.push_sample([candidate])
 
 def marker_input():
