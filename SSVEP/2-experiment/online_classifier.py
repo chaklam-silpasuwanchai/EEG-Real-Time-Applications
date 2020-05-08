@@ -38,7 +38,6 @@ def runRT(count):
 	with LSLClient(info=info, host=host, wait_max=3) as client:
 		#print("data to array:",count, "  Start Time:",a-time.time())
 
-
 		epoch = client.get_data_as_epoch(n_samples=epoch_chunks)
 		#print("data to array:",count, "  End Time:",a-time.time())
 		epoch.filter(4, 77, method='iir')
