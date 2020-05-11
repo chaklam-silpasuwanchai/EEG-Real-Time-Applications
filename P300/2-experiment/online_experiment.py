@@ -13,7 +13,13 @@ import random
 import string
 import time
 
-MAX_FLASHES = 10000  # Maximum number of flashed images. Window will stop afterwards
+
+MAX_REPETITION = 10000  # Maximum number of repetition, each repetition runs through 1-36 randomly. Window will stop afterwards
+
+FLASH_CONCURRENT = True
+CONCURRENT_ELEMENTS = 3  #if above set to True, else will not take effect
+
+TEST_UI = False  #will not send markers
 
 
 class P300Window(object):
@@ -161,7 +167,7 @@ class P300Window(object):
 
         flash_sequence = []
 
-        for i in range(10000):
+        for i in range(MAX_REPETITION):
             seq = list(range(maximum_number))  #generate 0 to maximum_number
             random.shuffle(seq)  #shuffle
             flash_sequence.extend(seq)
@@ -169,7 +175,8 @@ class P300Window(object):
         self.flash_sequence = flash_sequence
 
     def start(self):
-        self.read_lsl_marker()
+        if not (TEST_UI):
+            self.read_lsl_marker()
         self.running = 1
         letter = self.word[0]
         image_index = string.ascii_lowercase.index(letter)
@@ -183,37 +190,32 @@ class P300Window(object):
         self.start_btn.configure(state='normal')
         self.pause_btn.configure(state='disabled')
 
+    def check_pause(self):
+        if self.running == 0:
+            print('Flashing paused at sequence number ' + str(self.sequence_number))
+            return
 
-    def start_flashing(self):
+    def check_sequence_end(self):
         if self.sequence_number == len(self.flash_sequence):  #stop flashing if all generated sequence number runs out
             print('All elements had flashed - run out of juice')
             self.running = 0
             self.sequence_number = 0
             return
 
-        if self.running == 0:
-            print('Flashing paused at sequence number ' + str(self.sequence_number))
-            return
-
+    def get_marker_result(self):
         result = self.marker_result()
         if(result):
             print("Marker received: ", result[0][0])
             receive = result[0][0]
         else:
-            receive = 0    
+            receive = 0 
 
-        element_to_flash = self.flash_sequence[self.sequence_number]
-        letter = self.word[self.letter_idx]
-        image_index = string.ascii_lowercase.index(letter)
+        return receive
 
-        #pushed markers to LSL stream
 
-        print("Letter: ", image_index, " Element flash: ", [element_to_flash + 1])
-        self.lsl_output.push_sample([element_to_flash + 1])  # add 1 to prevent 0 in markers
-        self.flash_single_element(element_to_flash)
-
+    def output_letter(self, receive):
         if not(receive):
-            self.master.after(self.break_duration, self.start_flashing)
+            self.master.after(self.break_duration, self.start_concurrent_flashing)
         else:
             if((image_index + 1) == receive):
                 self.output.insert("end", self.pos_to_char(receive), "green")
@@ -226,10 +228,46 @@ class P300Window(object):
             letter = self.word[self.letter_idx]
             image_index = string.ascii_lowercase.index(letter)
             self.master.after(self.break_duration, self.highlight_target, image_index)
-                
+
+    def start_concurrent_flashing(self):
+        
+        self.check_sequence_end()
+        self.check_pause()
+        receive = self.get_marker_result()
+
+        element_to_flash = self.flash_sequence[self.sequence_number:self.sequence_number+CONCURRENT_ELEMENTS]
+        letter = self.word[self.letter_idx]
+        image_index = string.ascii_lowercase.index(letter)
+
+        #pushed markers to LSL stream
+
+        print("Letter: ", image_index, " Element flash: ", [x + 1 for x in element_to_flash])
+        for e in element_to_flash:
+            self.lsl_output.push_sample([e + 1])  # add 1 to prevent 0 in markers
+
+        self.flash_multiple_elements(element_to_flash)
+        self.output_letter(receive)
+
+        self.sequence_number = self.sequence_number + CONCURRENT_ELEMENTS  #change flash position
+
+    def start_flashing(self):
+        self.check_sequence_end()
+        self.check_pause()
+        receive = self.get_marker_result()
+
+        element_to_flash = self.flash_sequence[self.sequence_number]
+        letter = self.word[self.letter_idx]
+        image_index = string.ascii_lowercase.index(letter)
+
+        #pushed markers to LSL stream
+
+        print("Letter: ", image_index, " Element flash: ", [element_to_flash + 1])
+        self.lsl_output.push_sample([element_to_flash + 1])  # add 1 to prevent 0 in markers
+        self.flash_single_element(element_to_flash)
+
+        self.output_letter(receive)       
 
         self.sequence_number = self.sequence_number + 1  #change flash position
-
 
     def pos_to_char(self, pos):
         return chr(pos -1 + 97)
@@ -248,8 +286,11 @@ class P300Window(object):
 
     def unhighlight_image(self, element_no):
         self.change_image(self.image_labels[element_no], self.usable_images[element_no])
-        self.master.after(self.flash_duration, self.start_flashing)
 
+        if(FLASH_CONCURRENT):
+            self.master.after(self.flash_duration, self.start_concurrent_flashing)
+        else:
+            self.master.after(self.flash_duration, self.start_flashing)
 
     def show_highlight_letter(self, pos):
 
@@ -300,6 +341,16 @@ class P300Window(object):
                 cur_idx = current_column + r * num_cols
                 self.change_image(self.image_labels[cur_idx], self.usable_images[cur_idx])
 
+    def flash_multiple_elements(self, element_array):
+        for element_no in element_array:
+            self.change_image(self.image_labels[element_no], self.flash_image)
+        
+        self.master.after(self.flash_duration, self.unflash_multiple_elements, element_array)
+
+    def unflash_multiple_elements(self, element_array):
+        for element_no in element_array:
+            self.change_image(self.image_labels[element_no], self.usable_images[element_no])
+
     def flash_single_element(self, element_no):
         self.change_image(self.image_labels[element_no], self.flash_image)
         self.master.after(self.flash_duration, self.unflash_single_element, element_no)
@@ -308,8 +359,11 @@ class P300Window(object):
         self.change_image(self.image_labels[element_no], self.usable_images[element_no])
 
     def marker_result(self):
-        marker, timestamp = self.inlet_marker.pull_chunk()
-        return marker
+        if not (TEST_UI):
+            marker, timestamp = self.inlet_marker.pull_chunk()
+            return marker
+        else:
+            return 0
 
     def read_lsl_marker(self):
         print("looking for a Markers stream...")
