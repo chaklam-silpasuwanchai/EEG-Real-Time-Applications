@@ -29,6 +29,7 @@ Topics include:
 1. **Psychological Experiment** - follows typical paradigm of showing stimuli and inferring user's state based on EEG signal, typically power spectrum (e.g., alpha).  Offline analysis based.  Useful for students to understand the basic setup of the EEG system.
 2. **SSVEP Control** - aims to create an unsupervised online classification of three targets using Filter-bank Canonical Correlation Analysis.  Since this is unsupervised, offline analysis is done mainly to identify optimal parameters (e.g., epoch width).  Useful for students to understand the SSVEP paradigms.
 3. **P300 Speller** - aims to create a 6 x 6 matrix speller using different stimuli variations; unsupervised method (e.g., discriminant analysis) will be demonstrated for online classification.  Useful for students to understand how ERP works.
+4. **Motor Imagery Control** - aims to allow users to train left/right movement thoughts to control left/right movements
 5. **Real-time Emotion Recognition** - aims to create a real-time (online) emotion classification system based on power spectrum.
 6. **Thoughts reconstruction** - aims to perform thoughts reconstruction by translating EEG signals to audio/visual forms using GANs.
 
@@ -41,14 +42,14 @@ Things need to take precaution:
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab; brain microvolts should be around -10; make sure you are properly   grounded (you can close after checking)
    3. Run <code>python offline_experiment.py</code>  (do not click space yet)
-   4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
+   4. Run <code>python lsl-record</code> on another tab; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis
 2. **SSVEP**
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab to check and then close
    3. Run <code>python offline_experiment.py</code>  (do not click space yet)
-   4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
+   4. Run <code>python lsl-record</code> on another tab; it should detect the marker stream from (iii)
    5. Press space bar from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  Since we are using unsupervised CCA, this file is mainly to  find the optimal parameters when used with online
    7. run <code> python online_classifier.py </code> (make sure to do this before step (viii), or else, no markers stream will be found)
@@ -57,7 +58,7 @@ Things need to take precaution:
    1. Run <code>python lsl-stream</code> on the background
    2. Run <code>python lsl-viewer</code> on another tab to check and then close
    3. Run <code>python offline_experiment.py</code>  (do not click space yet)
-   4. Run <code>python lsl-record</code>; it should detect the marker stream from (iii)
+   4. Run <code>python lsl-record</code> on another tab; it should detect the marker stream from (iii)
    5. Press Start from (iii)
    6. Data can be found in 3-analysis/data; Open Offline.ipynb for offline analysis.  You should see a spike for targets, and vice versa for non-targers
    7. run <code> python online_experiment.py </code> (make sure to do this before step (viii), but do not press Start yet)
@@ -65,4 +66,4 @@ Things need to take precaution:
    9. Now, press Start from (vii).  The code from (viii) will send the classification result to (vii)
 4. **MI** (TBD)
 5. **Real-time Emotion Recognition** (TBD)
-6. **Existing Dataset** (TBD)
+6. **Past-recollection** (TBD)
