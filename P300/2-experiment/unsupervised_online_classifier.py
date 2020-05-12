@@ -9,6 +9,7 @@ import sys
 import itertools
 from itertools import chain
 import math
+import warnings
 
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/chaklam/bci_project/BCI/P300/utils')
@@ -59,7 +60,7 @@ def mapAndClassify(start_time):
     end_time = start_time + epoch_width
     sleep(epoch_width - waittime + 0.1)  #wait for all data; 0.1 for possible delay hacking
 
-    #print("1. Getting trial EEG.....")
+    #1. Getting trial EEG
     eeg_time_numpy = np.array(EEGTime)
     eeg_numpy = np.concatenate(EEGData, axis=0)
     #print(len(eeg), " should equal to ", len(eeg_timestamps))
@@ -72,9 +73,9 @@ def mapAndClassify(start_time):
     trialEEG_time = eeg_time_numpy[eeg_start_ix:eeg_end_ix+1]
     #print("Trial EEG Length: ", len(trialEEG))
 
-    #print("2. Getting trial markers....")
-    marker_numpy = np.array(Marker)
-    if(marker_numpy.size):  #if marker has arrived
+    #2. Getting trial markers
+    if(len(Marker)):  #if marker has arrived
+        marker_numpy = np.array(Marker)
         marker_timestamps = marker_numpy[:, 1]
         marker_data = list(itertools.chain(*marker_numpy[:, 0]))
         marker_start_ix = np.argmin(np.abs(start_time - marker_timestamps))
@@ -86,7 +87,7 @@ def mapAndClassify(start_time):
         markerMapped = [0] * len(trialEEG)
         marker_ind = []
 
-        #print("3. Mapping markers to EEG....")
+        #3. Mapping markers to EEG
         for i, (time) in enumerate(trialMarkers_time):
             ix = np.argmin(np.abs(time - trialEEG_time))
             markerMapped[ix] = trialMarkers[i]
@@ -94,7 +95,7 @@ def mapAndClassify(start_time):
 
         #print("Marker_index: ", marker_ind)
 
-        #print("4. Making epochs of size with tmin {} tmax {} of: ".format(tmin,tmax))
+        #4. Making epochs of size with tmin {} tmax {} of: ".format(tmin,tmax))
         epochArray = []  #combining eegs and corresponding marker that has already been windowed
 
         for i, (index) in enumerate(marker_ind):
@@ -104,8 +105,7 @@ def mapAndClassify(start_time):
                 #print("Created epoch from eeg sample {} to {} for marker# {}... ".format(index+tmin, index+tmax, trialMarkers[i]))
 
 
-        #print("5. Classifying....")
-
+        #5. Classifying
         mean_var = []
         epochnp = np.array(epochArray)
 
@@ -117,34 +117,37 @@ def mapAndClassify(start_time):
                 cond = epochnp[:, 1] == i
                 selected_epochs_eeg =epochnp[cond][:, 0]
                 #flat out the lists of list, and take mean
-                flat_list = list(chain(*selected_epochs_eeg))
-                mean = np.mean(np.mean(flat_list, axis=0))  #mean across all samples  across all channels
-                var = np.mean(np.var(flat_list, axis=0))    #var across all samples   across all channels   
-                mean_var.append([mean, var])
-            
-            #print("Mean_var: ", mean_var)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=RuntimeWarning)
+                    flat_list = np.nan_to_num(list(chain(*selected_epochs_eeg)))
+                    mean = np.mean(np.mean(flat_list, axis=0))  #mean across all samples across all channels
+                    var = np.mean(np.var(flat_list, axis=0))    #var across all samples across all channels   
+                    mean_var.append([mean, var])
+    
+        #     #print("Mean_var: ", mean_var)
             scores = fisher_criterion_score(mean_var)
 
             #print("Epoch score: ", scores)
-
-            scorelist.append(scores)
+            scorelist.append(scores)  #convert any nan to zero
 
             # #wait until we got at least 10 scores
             if(len(scorelist) > 9):
-                res = np.nanmean(scorelist[-10:], axis=0)
-                #print("Last 10 epoch scores mean: ", res)
+                # print("Scorelist: ", scorelist[:10:])
+                res = np.mean(scorelist[-10:], axis=0)
+                # print("Last 10 epoch scores mean: ", res)
                 candidate = np.argmax(res)
                 score = res[candidate]
-                temp = res.copy()
-                temp.pop(candidate)
+                temp = np.delete(res, candidate)
                 nextcandidate = np.argmax(temp)
                 score_next = temp[nextcandidate]
-                print("Candidate score: ", score)
-                print("Second next candidate score: ", score_next)
-                print("Candidate index (argmax): ", candidate)
-                print("Candidate Letter: ", pos_to_char(np.argmax(res)))  #find the maximum scores and convert to char
-              # if    
-              #   outlet.push_sample([candidate])
+                ratio = score / score_next
+                print("Ratio diff: ", ratio)
+                print("---------------------------------------------------------------------------------")
+                print("1st score: ", score, "Index: ", candidate, "; Letter: ", pos_to_char(candidate))
+                print("2nd score: ", score_next, "Index: ", nextcandidate, "; Letter: ", pos_to_char(nextcandidate))
+                if(ratio > 2):    
+                    outlet.push_sample([candidate])
+                    print("Pushed ", pos_to_char(candidate), " to LSL")
         else:
             print("Waiting for more markers....")
 
@@ -157,7 +160,9 @@ def fisher_criterion_score(mean_var):
         for j, (mean_j, var_j) in enumerate(mean_var_temp):
              if not (np.isnan(mean_i) or np.isnan(mean_j)) and not (var_i == 0  or var_j == 0):
                 each_marker_score.append( np.abs(mean_i - mean_j) / (var_i + var_j) )
-        fisher_criterion_score.append(np.mean(each_marker_score))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            fisher_criterion_score.append(np.mean(each_marker_score))
 
     return fisher_criterion_score
 
@@ -189,6 +194,7 @@ if marker_streams:
     inlet_marker = StreamInlet(marker_streams[0])
     marker_time_correction = inlet_marker.time_correction()
     print("Found Markers stream")
+    print("You can now press Start on the speller")
 
 acquire = threading.Thread(target = acquireMarkersAndEEG,args=())
 acquire.start() # start reading the eeg stream 

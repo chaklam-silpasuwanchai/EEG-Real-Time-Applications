@@ -54,7 +54,7 @@ class P300Window(object):
         self.sequence_number = 0
         self.lsl_output = None
         
-        self.running = 0  #for pause
+        # self.running = 0  #for pause
 
         self.image_frame = Frame(self.master)
         self.image_frame.grid(row=0, column=0, rowspan=self.number_of_rows,
@@ -65,9 +65,9 @@ class P300Window(object):
         self.start_btn = Button(self.master, textvariable=self.start_btn_text, command=self.start)
         self.start_btn.grid(row=self.number_of_rows + 3, column=self.number_of_columns - 1)
 
-        self.pause_btn = Button(self.master, text='Pause', command=self.pause)
-        self.pause_btn.grid(row=self.number_of_rows + 3, column=self.number_of_columns - 4)  #-4 for center
-        self.pause_btn.configure(state='disabled')
+        # self.pause_btn = Button(self.master, text='Pause', command=self.pause)
+        # self.pause_btn.grid(row=self.number_of_rows + 3, column=self.number_of_columns - 4)  #-4 for center
+        # self.pause_btn.configure(state='disabled')
 
         self.close_btn = Button(self.master, text='Close', command=master.quit)
         self.close_btn.grid(row=self.number_of_rows + 3, column=0)
@@ -184,16 +184,16 @@ class P300Window(object):
         self.start_btn.configure(state='disabled')
         self.pause_btn.configure(state='normal')
 
-    def pause(self):
-        self.running = 0
-        self.start_btn_text.set('Resume')
-        self.start_btn.configure(state='normal')
-        self.pause_btn.configure(state='disabled')
+    # def pause(self):
+    #     self.running = 0
+    #     self.start_btn_text.set('Resume')
+    #     self.start_btn.configure(state='normal')
+    #     self.pause_btn.configure(state='disabled')
 
-    def check_pause(self):
-        if self.running == 0:
-            print('Flashing paused at sequence number ' + str(self.sequence_number))
-            return
+    # def check_pause(self):
+    #     if self.running == 0:
+    #         print('Flashing paused at sequence number ' + str(self.sequence_number))
+    #         return
 
     def check_sequence_end(self):
         if self.sequence_number == len(self.flash_sequence):  #stop flashing if all generated sequence number runs out
@@ -213,9 +213,12 @@ class P300Window(object):
         return receive
 
 
-    def output_letter(self, receive):
+    def output_letter(self, receive, image_index):
         if not(receive):
-            self.master.after(self.break_duration, self.start_concurrent_flashing)
+            if(FLASH_CONCURRENT):
+                self.master.after(self.break_duration, self.start_concurrent_flashing)
+            else:
+                self.master.after(self.break_duration, self.start_flashing)
         else:
             if((image_index + 1) == receive):
                 self.output.insert("end", self.pos_to_char(receive), "green")
@@ -232,7 +235,7 @@ class P300Window(object):
     def start_concurrent_flashing(self):
         
         self.check_sequence_end()
-        self.check_pause()
+        # self.check_pause()
         receive = self.get_marker_result()
 
         element_to_flash = self.flash_sequence[self.sequence_number:self.sequence_number+CONCURRENT_ELEMENTS]
@@ -246,13 +249,13 @@ class P300Window(object):
             self.lsl_output.push_sample([e + 1])  # add 1 to prevent 0 in markers
 
         self.flash_multiple_elements(element_to_flash)
-        self.output_letter(receive)
+        self.output_letter(receive, image_index)
 
         self.sequence_number = self.sequence_number + CONCURRENT_ELEMENTS  #change flash position
 
     def start_flashing(self):
         self.check_sequence_end()
-        self.check_pause()
+        # self.check_pause()
         receive = self.get_marker_result()
 
         element_to_flash = self.flash_sequence[self.sequence_number]
@@ -265,12 +268,12 @@ class P300Window(object):
         self.lsl_output.push_sample([element_to_flash + 1])  # add 1 to prevent 0 in markers
         self.flash_single_element(element_to_flash)
 
-        self.output_letter(receive)       
+        self.output_letter(receive, image_index)
 
         self.sequence_number = self.sequence_number + 1  #change flash position
 
     def pos_to_char(self, pos):
-        return chr(pos -1 + 97)
+        return chr(pos + 97)
 
     def highlight_target(self, image_index):
         self.show_highlight_letter(self.letter_idx)
