@@ -1,6 +1,6 @@
 # BCI @ AIT
 
-This simple project was created to demonstrate how BCI can be done from Data acquisition, Running the Experiment, and Analyzing the Data perspective, mainly for my students at Asian Institute of Technology, ICT Department.  It is intended to quickly boostrap my lab students for starting their research. This is an ongoing project and I intend to populate this with at least six topics (see below), all of which are ongoing research topics in my lab.
+This simple project was created to demonstrate how BCI can be done from data acquisition, running the Experiment, and analyzing the data perspective, mainly for my students at Asian Institute of Technology, ICT Department.  It is intended to quickly boostrap my lab students for starting their research. This is an ongoing project and I intend to populate this with at least six topics (see below), all of which are ongoing research topics in my lab.
 
 Contributors:
 Chaklam Silpasuwanchai, Apiporn Simapornchai, Anyone at AIT wanna join?
