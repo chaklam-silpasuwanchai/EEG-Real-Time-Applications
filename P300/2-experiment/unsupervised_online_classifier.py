@@ -53,7 +53,7 @@ def acquireMarkersAndEEG():
 
 def mapAndClassify(start_time):
     end_time = start_time + epoch_width
-    sleep(epoch_width-waittime + 0.1)  #wait for all data; 0.1 for delay hacking
+    sleep(epoch_width - waittime + 0.1)  #wait for all data; 0.1 for possible delay hacking
 
     print("1. Getting trial EEG.....")
     eeg_time_numpy = np.array(EEGTime)
@@ -77,28 +77,32 @@ def mapAndClassify(start_time):
         print("Trial Markers: ", trialMarkers)
 
         markerMapped = [0] * len(trialEEG)
+        marker_ind = []
 
         print("3. Mapping markers to EEG....")
         for i, (time) in enumerate(trialMarkers_time):
             ix = np.argmin(np.abs(time - trialEEG_time))
             markerMapped[ix] = trialMarkers[i]
-            print("Marker ", trialMarkers[i], "mapped to ", ix)
+            marker_ind.append(ix)
 
-        print("4. Making epochs of size with tmin .. tmax of: ", tmin, "..", tmax)
+        #print("Marker_index: ", marker_ind)
+
+        print("4. Making epochs of size with tmin {} tmax {} of: ".format(tmin,tmax))
         epochArray = []  #combining eegs and corresponding marker that has already been windowed
 
-        for i in range(len(trialEEG)-tmax):   #-tmax so we make sure this data can be epoched
-            marker = markerMapped[i]
-            #any eeg data containing marker !=0 from tmin to  tmax is extracted
-            if(marker>0):
-                print("Created epoch for marker# : ", marker)
-                eeg = trialEEG[i+tmin:i+tmax]
-                epochArray.append([eeg,marker])
+        for i, (index) in enumerate(marker_ind):
+            if(index < (len(trialEEG) - tmax)):
+                eeg = trialEEG[index+tmin:index+tmax]
+                epochArray.append([eeg, trialMarkers[i]])
+                print("Created epoch from eeg sample {} to {} for marker# {}... ".format(index+tmin, index+tmax, trialMarkers[i]))
+
 
         print("5. Classifying....")
 
         mean_var = []
         epochnp = np.array(epochArray)
+
+        #print("Epoch array: ", epochnp)
 
         #loop through 36 markers start from 1 to 36
         if(epochnp.size > 0):
@@ -107,18 +111,12 @@ def mapAndClassify(start_time):
                 selected_epochs_eeg =epochnp[cond][:, 0]
                 #flat out the lists of list, and take mean
                 flat_list = list(chain(*selected_epochs_eeg))
-                mean = np.mean(flat_list, axis=0)  #mean across all samples  
-                var = np.var(flat_list, axis=0)    #var across all samples        
+                mean = np.mean(np.mean(flat_list, axis=0))  #mean across all samples  across all channels
+                var = np.mean(np.var(flat_list, axis=0))    #var across all samples   across all channels   
                 mean_var.append([mean, var])
-                
-            scores = []
-            for i, (mean, var) in enumerate(mean_var):
-                m = np.mean(mean)  #mean across all channels
-                v = np.mean(var)
-                if not(np.isnan(v)):
-                    scores.append(v)  #simply use variances as scores (we may want to use more fancy disrimant analysis later)
-                else:
-                    scores.append(0)
+            
+            print("Mean_var: ", mean_var)
+            scores = fisher_criterion_score(mean_var)
 
             print("Epoch score: ", scores)
 
@@ -135,6 +133,19 @@ def mapAndClassify(start_time):
             #         #outlet.push_sample([candidate])
         else:
             print("Waiting for more markers....")
+
+def fisher_criterion_score(mean_var):
+    fisher_criterion_score = []
+    for i, (mean_i, var_i) in enumerate(mean_var):
+        mean_var_temp = mean_var.copy()
+        mean_var_temp.pop(i)  #pop in place
+        each_marker_score = []
+        for j, (mean_j, var_j) in enumerate(mean_var_temp):
+             if not (np.isnan(mean_i) or np.isnan(mean_j)) and not (var_i == 0  or var_j == 0):
+                each_marker_score.append( np.abs(mean_i - mean_j) / (var_i + var_j) )
+        fisher_criterion_score.append(np.mean(each_marker_score))
+
+    return fisher_criterion_score
 
 def marker_input():
     marker, timestamp = inlet_marker.pull_sample(timeout=0.0)
