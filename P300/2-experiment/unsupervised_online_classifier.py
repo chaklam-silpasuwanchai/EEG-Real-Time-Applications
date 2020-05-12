@@ -10,6 +10,10 @@ import itertools
 from itertools import chain
 import math
 
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '/home/chaklam/bci_project/BCI/P300/utils')
+from filter import butter_bandpass, butter_bandpass_filter
+
 #defining the marker
 info = StreamInfo(name='ResultMarkerStream', type='ResultMarkers',
                   channel_count=1, channel_format='int8', nominal_srate=IRREGULAR_RATE,
@@ -55,17 +59,20 @@ def mapAndClassify(start_time):
     end_time = start_time + epoch_width
     sleep(epoch_width - waittime + 0.1)  #wait for all data; 0.1 for possible delay hacking
 
-    print("1. Getting trial EEG.....")
+    #print("1. Getting trial EEG.....")
     eeg_time_numpy = np.array(EEGTime)
     eeg_numpy = np.concatenate(EEGData, axis=0)
     #print(len(eeg), " should equal to ", len(eeg_timestamps))
     eeg_start_ix = np.argmin(np.abs(start_time - eeg_time_numpy))
     eeg_end_ix = np.argmin(np.abs(end_time - eeg_time_numpy))
     trialEEG = eeg_numpy[eeg_start_ix:eeg_end_ix+1]
-    trialEEG_time = eeg_time_numpy[eeg_start_ix:eeg_end_ix+1]
-    print("Trial EEG Length: ", len(trialEEG))
 
-    print("2. Getting trial markers....")
+    lowcut, highcut = 1, 30
+    trialEEG = butter_bandpass_filter(trialEEG, lowcut, highcut, sfreq, order=6)
+    trialEEG_time = eeg_time_numpy[eeg_start_ix:eeg_end_ix+1]
+    #print("Trial EEG Length: ", len(trialEEG))
+
+    #print("2. Getting trial markers....")
     marker_numpy = np.array(Marker)
     if(marker_numpy.size):  #if marker has arrived
         marker_timestamps = marker_numpy[:, 1]
@@ -74,12 +81,12 @@ def mapAndClassify(start_time):
         marker_end_ix = np.argmin(np.abs(end_time - marker_timestamps))
         trialMarkers = marker_data[marker_start_ix:marker_end_ix+1]
         trialMarkers_time = marker_timestamps[marker_start_ix:marker_end_ix+1]
-        print("Trial Markers: ", trialMarkers)
+        #print("Trial Markers: ", trialMarkers)
 
         markerMapped = [0] * len(trialEEG)
         marker_ind = []
 
-        print("3. Mapping markers to EEG....")
+        #print("3. Mapping markers to EEG....")
         for i, (time) in enumerate(trialMarkers_time):
             ix = np.argmin(np.abs(time - trialEEG_time))
             markerMapped[ix] = trialMarkers[i]
@@ -87,17 +94,17 @@ def mapAndClassify(start_time):
 
         #print("Marker_index: ", marker_ind)
 
-        print("4. Making epochs of size with tmin {} tmax {} of: ".format(tmin,tmax))
+        #print("4. Making epochs of size with tmin {} tmax {} of: ".format(tmin,tmax))
         epochArray = []  #combining eegs and corresponding marker that has already been windowed
 
         for i, (index) in enumerate(marker_ind):
             if(index < (len(trialEEG) - tmax)):
                 eeg = trialEEG[index+tmin:index+tmax]
                 epochArray.append([eeg, trialMarkers[i]])
-                print("Created epoch from eeg sample {} to {} for marker# {}... ".format(index+tmin, index+tmax, trialMarkers[i]))
+                #print("Created epoch from eeg sample {} to {} for marker# {}... ".format(index+tmin, index+tmax, trialMarkers[i]))
 
 
-        print("5. Classifying....")
+        #print("5. Classifying....")
 
         mean_var = []
         epochnp = np.array(epochArray)
@@ -115,22 +122,29 @@ def mapAndClassify(start_time):
                 var = np.mean(np.var(flat_list, axis=0))    #var across all samples   across all channels   
                 mean_var.append([mean, var])
             
-            print("Mean_var: ", mean_var)
+            #print("Mean_var: ", mean_var)
             scores = fisher_criterion_score(mean_var)
 
-            print("Epoch score: ", scores)
+            #print("Epoch score: ", scores)
 
             scorelist.append(scores)
 
             # #wait until we got at least 10 scores
             if(len(scorelist) > 9):
-                res = np.mean(scorelist[-10:], axis=0)
-                print("Last 10 epoch scores mean: ", res)
+                res = np.nanmean(scorelist[-10:], axis=0)
+                #print("Last 10 epoch scores mean: ", res)
                 candidate = np.argmax(res)
+                score = res[candidate]
+                temp = res.copy()
+                temp.pop(candidate)
+                nextcandidate = np.argmax(temp)
+                score_next = temp[nextcandidate]
+                print("Candidate score: ", score)
+                print("Second next candidate score: ", score_next)
                 print("Candidate index (argmax): ", candidate)
                 print("Candidate Letter: ", pos_to_char(np.argmax(res)))  #find the maximum scores and convert to char
-            #     #if it pass certain threshold, will 
-            #         #outlet.push_sample([candidate])
+              # if    
+              #   outlet.push_sample([candidate])
         else:
             print("Waiting for more markers....")
 
