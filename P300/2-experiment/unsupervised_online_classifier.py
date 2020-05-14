@@ -61,28 +61,34 @@ def mapAndClassify(start_time):
     sleep(epoch_width - waittime + 0.1)  #wait for all data; 0.1 for possible delay hacking
 
     #1. Getting trial EEG
-    eeg_time_numpy = np.array(EEGTime)
-    eeg_numpy = np.concatenate(EEGData, axis=0)
+    eegdata_copy = EEGData.copy()  #to avoid any change of data
+    eegtime_copy = EEGTime.copy()
+    eeg_time_numpy = np.array(eegtime_copy)
+    eeg_numpy = np.concatenate(eegdata_copy, axis=0)
     #print(len(eeg), " should equal to ", len(eeg_timestamps))
     eeg_start_ix = np.argmin(np.abs(start_time - eeg_time_numpy))
     eeg_end_ix = np.argmin(np.abs(end_time - eeg_time_numpy))
     trialEEG = eeg_numpy[eeg_start_ix:eeg_end_ix+1]
 
     lowcut, highcut = 1, 30
+    # print("Before filter: ", trialEEG[0])
     trialEEG = butter_bandpass_filter(trialEEG, lowcut, highcut, sfreq, order=6)
+    # print("After filter: ", trialEEG[0])
     trialEEG_time = eeg_time_numpy[eeg_start_ix:eeg_end_ix+1]
     #print("Trial EEG Length: ", len(trialEEG))
 
     #2. Getting trial markers
     if(len(Marker)):  #if marker has arrived
-        marker_numpy = np.array(Marker)
+        marker_copy = Marker.copy()
+        marker_numpy = np.array(marker_copy)
+        # print("Length Marker Numpy: ", marker_numpy.shape)
         marker_timestamps = marker_numpy[:, 1]
         marker_data = list(itertools.chain(*marker_numpy[:, 0]))
         marker_start_ix = np.argmin(np.abs(start_time - marker_timestamps))
         marker_end_ix = np.argmin(np.abs(end_time - marker_timestamps))
         trialMarkers = marker_data[marker_start_ix:marker_end_ix+1]
         trialMarkers_time = marker_timestamps[marker_start_ix:marker_end_ix+1]
-        #print("Trial Markers: ", trialMarkers)
+        print("Trial Markers: ", trialMarkers)
 
         markerMapped = [0] * len(trialEEG)
         marker_ind = []
@@ -119,38 +125,48 @@ def mapAndClassify(start_time):
                 #flat out the lists of list, and take mean
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", category=RuntimeWarning)
-                    flat_list = np.nan_to_num(list(chain(*selected_epochs_eeg)))
+                    flat_list = list(chain(*selected_epochs_eeg))
                     mean = np.mean(np.mean(flat_list, axis=0))  #mean across all samples across all channels
                     var = np.mean(np.var(flat_list, axis=0))    #var across all samples across all channels   
                     mean_var.append([mean, var])
     
-        #     #print("Mean_var: ", mean_var)
+            print("Mean_var: ", mean_var)
             scores = fisher_criterion_score(mean_var)
 
-            #print("Epoch score: ", scores)
+            print("Epoch score: ", scores)
+
+
+
             scorelist.append(scores)  #convert any nan to zero
 
             # #wait until we got at least 10 scores
-            if(len(scorelist) > 9):
+            if(len(scorelist) > 4):
                 # print("Scorelist: ", scorelist[:10:])
-                res = np.mean(scorelist[-10:], axis=0)
-                # print("Last 10 epoch scores mean: ", res)
+                res = np.nanmean(np.nan_to_num(scorelist[-5:]), axis=0)
+                print("Last 10 epoch scores mean: ", res)
                 candidate = np.argmax(res)
                 score = res[candidate]
                 temp = np.delete(res, candidate)
                 nextcandidate = np.argmax(temp)
                 score_next = temp[nextcandidate]
                 ratio = score / score_next
-                print("Ratio diff: ", ratio)
                 print("---------------------------------------------------------------------------------")
                 print("1st score: ", score, "Index: ", candidate, "; Letter: ", pos_to_char(candidate))
                 print("2nd score: ", score_next, "Index: ", nextcandidate, "; Letter: ", pos_to_char(nextcandidate))
+                print("Ratio diff: ", ratio)
                 if(ratio > 2):    
-                    outlet.push_sample([candidate])
+                    # outlet.push_sample([candidate])
                     print("Pushed ", pos_to_char(candidate), " to LSL")
         else:
             print("Waiting for more markers....")
 
+
+'''
+TBD:  Currently we are using simple fisher criterion which appears ineffective.
+It is probably wise to first try out Verhoeven online method:
+ T.   Verhoeven,   D.   H ̈ubner,   M.   Tangermann,   K.-R.   M ̈uller,J.  Dambre,  and  P.-J.  Kindermans,  
+ “Improving  zero-trainingbrain-computer interfaces by mixing model estimators,”Journalof Neural Engineering, vol. 14, no. 3, p. 036021, Apr. 2017
+'''
 def fisher_criterion_score(mean_var):
     fisher_criterion_score = []
     for i, (mean_i, var_i) in enumerate(mean_var):
@@ -159,7 +175,7 @@ def fisher_criterion_score(mean_var):
         each_marker_score = []
         for j, (mean_j, var_j) in enumerate(mean_var_temp):
              if not (np.isnan(mean_i) or np.isnan(mean_j)) and not (var_i == 0  or var_j == 0):
-                each_marker_score.append( np.abs(mean_i - mean_j) / (var_i + var_j) )
+                each_marker_score.append( np.abs(mean_i - mean_j) ** 2 / (var_i + var_j) )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             fisher_criterion_score.append(np.mean(each_marker_score))

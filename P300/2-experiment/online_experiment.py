@@ -16,7 +16,7 @@ import time
 
 MAX_REPETITION = 10000  # Maximum number of repetition, each repetition runs through 1-36 randomly. Window will stop afterwards
 
-FLASH_CONCURRENT = True
+FLASH_CONCURRENT = False
 CONCURRENT_ELEMENTS = 3  #if above set to True, else will not take effect
 
 TEST_UI = False  #will not send markers

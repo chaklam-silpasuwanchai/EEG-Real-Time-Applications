@@ -19,6 +19,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     y = sosfilt(sos, data)
     return y
 
+
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
