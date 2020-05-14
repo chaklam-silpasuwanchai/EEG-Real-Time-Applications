@@ -173,7 +173,6 @@ class P300Window(object):
         return StreamOutlet(info)  #for sending the predicted classes
 
     def create_flash_sequence(self):
-        flash_sequence = []
         num_rows = 6
         num_cols = 6
         maximum_number = num_rows * num_cols
@@ -184,8 +183,8 @@ class P300Window(object):
         count = 1
         while (len(seq) / 6 < 100):
             if (len(seq) > 0):
-                neighbor_list = seq[-count:]
-                left_list = [x-1 for x in neighbor_list]
+                neighbor_list = seq[-count:]   #the same set, with size of -1 to -6
+                left_list = [x-1 for x in neighbor_list]   # neighbor of each neighbor in neighbor_list
                 right_list = [x+1 for x in neighbor_list]
                 up_list = [x-6 for x in neighbor_list]
                 bot_list = [x+6 for x in neighbor_list]
@@ -194,24 +193,15 @@ class P300Window(object):
                 combine_list.extend(right_list)
                 combine_list.extend(up_list)
                 combine_list.extend(bot_list)
-                print("count",count)
-                print("next:", next_number)
-                print("neighbor_list:", neighbor_list)
-                print("left_list:", left_list)
-                print("right_list:", right_list)
-                print("up_list:", up_list)
-                print("bot_list:", bot_list)
-                print("combine_list", combine_list)
+                #should not be same element as previous set (*2), and should not be same element in the combine_list 
                 if (next_number not in seq[-CONCURRENT_ELEMENTS*2:] and next_number not in combine_list):
                     seq.extend(next_number)
-                    print("seq: ", seq)
-                    count = ((count) % 6) + 1
+                    count = ((count) % 6) + 1  #this count makes sure we have one set of 6
             else:
                 seq.extend(next_number)
             left_over = np.argwhere(number_count == np.argmin(number_count))
             selectMax = len(left_over) - 1
             next_number = left_over[random.randint(0, selectMax)]
-            print("next num: ", next_number)
         self.flash_sequence = seq
 
     def start(self):
