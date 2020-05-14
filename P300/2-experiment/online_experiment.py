@@ -1,3 +1,7 @@
+#Paper you must read - https://www.researchgate.net/publication/284171494_Towards_a_symbiotic_brain-computer_interface_exploring_the_application-decoder_interaction
+
+
+
 import glob
 import os
 from collections import deque
@@ -16,10 +20,10 @@ import time
 
 MAX_REPETITION = 10000  # Maximum number of repetition, each repetition runs through 1-36 randomly. Window will stop afterwards
 
-FLASH_CONCURRENT = False
-CONCURRENT_ELEMENTS = 3  #if above set to True, else will not take effect
+FLASH_CONCURRENT = True
+CONCURRENT_ELEMENTS = 6  #if above set to True, else will not take effect
 
-TEST_UI = False  #will not send markers
+TEST_UI = True  #will not send markers
 
 
 class P300Window(object):
@@ -35,12 +39,21 @@ class P300Window(object):
         self.number_of_rows = 6
         self.number_of_columns = 6  #make sure you have 6 x 6 amount of images in the images_folder_path
         self.flash_mode = 2  #single element  #1 for columns and rows; currently is NOT working yet; if I have time, will revisit
-        self.flash_duration = 100  #soa
-        self.break_duration = 125  #iti
+        self.flash_duration = 100  #flash duration
+        self.break_duration = 150  #isi
 
         self.trials = 6 #number of letters
-        self.delay = 2500 #interval between trial
+        self.delay = 1000 #interval between trial
         self.letter_idx = 0
+
+
+        #Parameter for random
+        # self.number_of_symbols =36
+        # self.fashed_per_iteration = 2
+        # self.number_of_iterations = 6
+        # self.stimuli_per_iteration = self.number_of_symbols * self.fashed_per_iteration / self.number_of_iterations
+
+
 
         #did not include numbers yet!
         self.random_letter = random.choices(string.ascii_lowercase, k=self.trials)   #randomize [self.trials] number letters
@@ -160,19 +173,46 @@ class P300Window(object):
         return StreamOutlet(info)  #for sending the predicted classes
 
     def create_flash_sequence(self):
-        self.flash_sequence = []
-        num_rows = self.number_of_rows
-        num_cols = self.number_of_columns
-        maximum_number = num_rows * num_cols
-
         flash_sequence = []
+        num_rows = 6
+        num_cols = 6
+        maximum_number = num_rows * num_cols
+        number_count = np.array([0] * maximum_number)
+        seq = []
+        next_number = [random.randint(0, maximum_number)]
 
-        for i in range(MAX_REPETITION):
-            seq = list(range(maximum_number))  #generate 0 to maximum_number
-            random.shuffle(seq)  #shuffle
-            flash_sequence.extend(seq)
-
-        self.flash_sequence = flash_sequence
+        count = 1
+        while (len(seq) / 6 < 100):
+            if (len(seq) > 0):
+                neighbor_list = seq[-count:]
+                left_list = [x-1 for x in neighbor_list]
+                right_list = [x+1 for x in neighbor_list]
+                up_list = [x-6 for x in neighbor_list]
+                bot_list = [x+6 for x in neighbor_list]
+                combine_list =[]
+                combine_list.extend(left_list)
+                combine_list.extend(right_list)
+                combine_list.extend(up_list)
+                combine_list.extend(bot_list)
+                print("count",count)
+                print("next:", next_number)
+                print("neighbor_list:", neighbor_list)
+                print("left_list:", left_list)
+                print("right_list:", right_list)
+                print("up_list:", up_list)
+                print("bot_list:", bot_list)
+                print("combine_list", combine_list)
+                if (next_number not in seq[-CONCURRENT_ELEMENTS*2:] and next_number not in combine_list):
+                    seq.extend(next_number)
+                    print("seq: ", seq)
+                    count = ((count) % 6) + 1
+            else:
+                seq.extend(next_number)
+            left_over = np.argwhere(number_count == np.argmin(number_count))
+            selectMax = len(left_over) - 1
+            next_number = left_over[random.randint(0, selectMax)]
+            print("next num: ", next_number)
+        self.flash_sequence = seq
 
     def start(self):
         if not (TEST_UI):
