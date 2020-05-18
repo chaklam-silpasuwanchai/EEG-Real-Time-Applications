@@ -17,6 +17,9 @@ import random
 import string
 import time
 
+import random
+from itertools import chain
+
 
 MAX_REPETITION = 10000  # Maximum number of repetition, each repetition runs through 1-36 randomly. Window will stop afterwards
 
@@ -172,37 +175,117 @@ class P300Window(object):
 
         return StreamOutlet(info)  #for sending the predicted classes
 
+    # def create_flash_sequence_old(self):
+    #     num_rows = 6
+    #     num_cols = 6
+    #     maximum_number = num_rows * num_cols
+    #     number_count = np.array([0] * maximum_number)
+    #     seq = []
+    #     next_number = [random.randint(0, maximum_number)]
+
+    #     count = 1
+    #     while (len(seq) / 6 < 100):
+    #         if (len(seq) > 0):
+    #             neighbor_list = seq[-count:]   #the same set, with size of -1 to -6
+    #             left_list = [x-1 for x in neighbor_list]   # neighbor of each neighbor in neighbor_list
+    #             right_list = [x+1 for x in neighbor_list]
+    #             up_list = [x-6 for x in neighbor_list]
+    #             bot_list = [x+6 for x in neighbor_list]
+    #             combine_list =[]
+    #             combine_list.extend(left_list)
+    #             combine_list.extend(right_list)
+    #             combine_list.extend(up_list)
+    #             combine_list.extend(bot_list)
+    #             #should not be same element as previous set (*2), and should not be same element in the combine_list 
+    #             if (next_number not in seq[-CONCURRENT_ELEMENTS*2:] and next_number not in combine_list):
+    #                 seq.extend(next_number)
+    #                 count = ((count) % 6) + 1  #this count makes sure we have one set of 6
+    #         else:
+    #             seq.extend(next_number)
+    #         left_over = np.argwhere(number_count == np.argmin(number_count))
+    #         selectMax = len(left_over) - 1
+    #         next_number = left_over[random.randint(0, selectMax)]
+    #     self.flash_sequence = seq
+
+
+    def find_replacement(self, nextelem, seq):
+        length = CONCURRENT_ELEMENTS if len(self.flash_sequence) > CONCURRENT_ELEMENTS - 1 else len(self.flash_sequence)
+        for i in range(1, length+1):
+            prev_seq = self.flash_sequence[-i:][0]
+            for j in range(len(prev_seq)):
+                previous_seq_elem = self.flash_sequence[-i:][0][j]
+                prev_seq_without_prevelem = [x for x in prev_seq if x != previous_seq_elem]
+                nl_prev = self.get_neighbors(prev_seq_without_prevelem)
+                nl_current = self.get_neighbors(seq)
+                if ( nextelem not in prev_seq and #a
+                nextelem not in nl_prev and #b
+                nextelem not in self.flash_sequence[-i-1:][0] and #c1  left consecutive
+                nextelem not in self.flash_sequence[-i+1:][0] #c2  right consecutive
+                and
+                previous_seq_elem not in seq and #a
+                previous_seq_elem not in nl_current and #b  
+                previous_seq_elem not in self.flash_sequence[-1:][0]): #c
+                    self.flash_sequence[-i:][0][j] = nextelem
+                    seq.append(previous_seq_elem)
+                    return seq
+        print("Can't swap..Restarting everything...")
+        create_flash_sequence()
+        
+    def get_neighbors(self, seq):
+        right = [ x + 1 for x in seq]
+        left = [ x - 1 for x in seq]
+        top = [ x - 6 for x in seq]
+        bottom = [ x + 6 for x in seq]
+        neighbors = list(chain(right, left, top, bottom))
+        return neighbors
+
     def create_flash_sequence(self):
         num_rows = 6
         num_cols = 6
-        maximum_number = num_rows * num_cols
-        number_count = np.array([0] * maximum_number)
-        seq = []
-        next_number = [random.randint(0, maximum_number)]
+        total = num_rows * num_cols
+        num_sequence = 100
 
-        count = 1
-        while (len(seq) / 6 < 100):
-            if (len(seq) > 0):
-                neighbor_list = seq[-count:]   #the same set, with size of -1 to -6
-                left_list = [x-1 for x in neighbor_list]   # neighbor of each neighbor in neighbor_list
-                right_list = [x+1 for x in neighbor_list]
-                up_list = [x-6 for x in neighbor_list]
-                bot_list = [x+6 for x in neighbor_list]
-                combine_list =[]
-                combine_list.extend(left_list)
-                combine_list.extend(right_list)
-                combine_list.extend(up_list)
-                combine_list.extend(bot_list)
-                #should not be same element as previous set (*2), and should not be same element in the combine_list 
-                if (next_number not in seq[-CONCURRENT_ELEMENTS*2:] and next_number not in combine_list):
-                    seq.extend(next_number)
-                    count = ((count) % 6) + 1  #this count makes sure we have one set of 6
-            else:
-                seq.extend(next_number)
-            left_over = np.argwhere(number_count == np.argmin(number_count))
-            selectMax = len(left_over) - 1
-            next_number = left_over[random.randint(0, selectMax)]
-        self.flash_sequence = seq
+        li = list(range(total))
+
+        while len(self.flash_sequence) < num_sequence:
+            seq = []
+            failcount = 0
+            if not li:
+                #if li is exhausted
+                li = list(range(36))
+            while len(seq) < CONCURRENT_ELEMENTS:
+                nextelem = random.choice(li)
+                if len(seq) > 0:
+                    nl = self.get_neighbors(seq)    
+                    #prevent stuck
+                    if failcount > 20:
+                        seq = self.find_replacement(nextelem, seq)
+                        li.remove(nextelem)
+                        failcount = 0
+                    elif nextelem not in nl and nextelem not in seq: 
+                        if len(self.flash_sequence):
+                            if nextelem not in self.flash_sequence[-1:][0]:  #0 remove the outer list [[]] becomes []
+                                seq.append(nextelem)
+                                li.remove(nextelem)
+                            else:
+                                failcount += 1
+                        else:
+                            seq.append(nextelem)
+                            li.remove(nextelem)
+                    else:
+                        failcount += 1
+                else:  #first element, just insert
+                    if len(self.flash_sequence):
+                        if nextelem not in self.flash_sequence[-1:][0]:
+                            seq.append(nextelem)
+                            li.remove(nextelem)
+                    else:
+                        seq.append(nextelem)
+                        li.remove(nextelem)
+            self.flash_sequence.append(seq)
+
+        self.flash_sequence = list(chain(*self.flash_sequence))
+
 
     def start(self):
         if not (TEST_UI):
