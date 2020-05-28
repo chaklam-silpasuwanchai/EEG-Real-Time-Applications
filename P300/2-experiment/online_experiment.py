@@ -49,6 +49,8 @@ class P300Window(object):
         self.delay = 1000 #interval between trial
         self.letter_idx = 0
 
+        # Param for creating sequence
+        self.num_sequence = 100
 
         #Parameter for random
         # self.number_of_symbols =36
@@ -240,10 +242,10 @@ class P300Window(object):
         return neighbors
 
     def create_flash_sequence(self):
-        num_rows = 6
-        num_cols = 6
+        num_rows = self.number_of_rows
+        num_cols = self.number_of_columns
         total = num_rows * num_cols
-        num_sequence = 100
+        num_sequence = self.num_sequence
 
         li = list(range(total))
 
@@ -327,23 +329,73 @@ class P300Window(object):
 
 
     def output_letter(self, receive, image_index):
-        if not(receive):
-            if(FLASH_CONCURRENT):
+        if not receive:
+            if FLASH_CONCURRENT:
                 self.master.after(self.break_duration, self.start_concurrent_flashing)
             else:
                 self.master.after(self.break_duration, self.start_flashing)
-        else:
-            if((image_index + 1) == receive):
+
+        elif receive.isnumeric():
+            if (image_index + 1) == receive:
                 self.output.insert("end", self.pos_to_char(receive), "green")
             else:
                 self.output.insert("end", self.pos_to_char(receive), "red")
 
             self.letter_idx += 1
-            if(self.letter_idx == len(self.word)):
+            if self.letter_idx == len(self.word):
                 return
             letter = self.word[self.letter_idx]
             image_index = string.ascii_lowercase.index(letter)
             self.master.after(self.break_duration, self.highlight_target, image_index)
+
+        else:
+            if FLASH_CONCURRENT:
+                self.candidate_flash_sequence(receive)
+                self.master.after(self.break_duration, self.start_concurrent_flashing)
+            else:
+                self.master.after(self.break_duration, self.start_flashing)
+
+    def candidate_flash_sequence(self,candidates):
+
+        num_rows = self.number_of_rows
+        num_col = self.number_of_columns
+        current_elements = self.flash_sequence[self.sequence_number:self.sequence_number + CONCURRENT_ELEMENTS]
+        next_elements = self.flash_sequence[self.sequence_number+CONCURRENT_ELEMENTS+1:self.sequence_number + CONCURRENT_ELEMENTS*2+1]
+
+        # Step 1 check if the candidate is included in the next list
+        # Step 2 check if there is multiple candidate in the next list ~ else just continue
+        count_contain_candidate = 0
+        for target_candidate in candidates:
+            if target_candidate in next_elements:
+                count_contain_candidate += 1
+
+        if count_contain_candidate > 1 or count_contain_candidate == 0:
+            # Step 3 check previous i length of sequence to know lease used candidate where i = candidate length
+            start_check_index = 0
+            previous_flashes_count = []
+            if CONCURRENT_ELEMENTS*len(candidates) > self.sequence_number:
+                start_check_index = self.sequence_number - CONCURRENT_ELEMENTS*len(candidates) -1
+            for target_candidate in candidates:
+                previous_flashes = self.flash_sequence[start_check_index: self.sequence_number - 1]
+                previous_flashes_count.append([target_candidate,previous_flashes.count(target_candidate)])
+            least_index = np.argmin(previous_flashes_count,axis=0)[1]
+            choosen_candidate = previous_flashes_count[least_index][0]
+
+
+
+
+
+
+        # Step 4 generate new list where
+        #       1 no duplicate
+        #       2 no multiple candidate
+        #       3 no neighbors
+        #       4 no previous list if possible (maybe all candidate is in the previous)
+        #       5 no next list if possible (maybe all candidate is in the next)
+        #       6 use the least use candidate
+
+
+
 
     def start_concurrent_flashing(self):
         

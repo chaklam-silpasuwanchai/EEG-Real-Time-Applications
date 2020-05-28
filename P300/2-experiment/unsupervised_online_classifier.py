@@ -150,6 +150,8 @@ def mapAndClassify(start_time):
                 nextcandidate = np.argmax(temp)
                 score_next = temp[nextcandidate]
                 ratio = score / score_next
+
+
                 print("---------------------------------------------------------------------------------")
                 print("1st score: ", score, "Index: ", candidate, "; Letter: ", pos_to_char(candidate))
                 print("2nd score: ", score_next, "Index: ", nextcandidate, "; Letter: ", pos_to_char(nextcandidate))
@@ -157,6 +159,19 @@ def mapAndClassify(start_time):
                 if(ratio > 2):    
                     # outlet.push_sample([candidate])
                     print("Pushed ", pos_to_char(candidate), " to LSL")
+                # if the ratio is still small send all possible targets to recalculate (more than average)
+                else:
+                    # get average of the res
+                    avg_score = np.mean(res)
+
+                    # create filter average function
+                    def filter_average(res_score):
+                        return res_score > avg_score
+
+                    # get candidate list
+                    candidate_list = list(filter(filter_average, res))
+                    # push back the list
+                    print("Pushed ", pos_to_char(candidate_list), " to LSL")
         else:
             print("Waiting for more markers....")
 
