@@ -20,7 +20,6 @@ import time
 import random
 from itertools import chain
 
-
 MAX_REPETITION = 10000  # Maximum number of repetition, each repetition runs through 1-36 randomly. Window will stop afterwards
 
 FLASH_CONCURRENT = True
@@ -329,13 +328,14 @@ class P300Window(object):
 
 
     def output_letter(self, receive, image_index):
+
         if not receive:
             if FLASH_CONCURRENT:
                 self.master.after(self.break_duration, self.start_concurrent_flashing)
             else:
                 self.master.after(self.break_duration, self.start_flashing)
 
-        elif receive.isnumeric():
+        elif isinstance(receive, int):
             if (image_index + 1) == receive:
                 self.output.insert("end", self.pos_to_char(receive), "green")
             else:
@@ -356,11 +356,11 @@ class P300Window(object):
                 self.master.after(self.break_duration, self.start_flashing)
 
     def candidate_flash_sequence(self,candidates):
-
+        print("got candidate")
         num_rows = self.number_of_rows
         num_col = self.number_of_columns
         current_elements = self.flash_sequence[self.sequence_number:self.sequence_number + CONCURRENT_ELEMENTS]
-        next_elements = self.flash_sequence[self.sequence_number+CONCURRENT_ELEMENTS+1:self.sequence_number + CONCURRENT_ELEMENTS*2+1]
+        next_elements = self.flash_sequence[self.sequence_number+CONCURRENT_ELEMENTS:self.sequence_number + CONCURRENT_ELEMENTS*2]
 
         # Step 1 check if the candidate is included in the next list
         # Step 2 check if there is multiple candidate in the next list ~ else just continue
@@ -380,6 +380,36 @@ class P300Window(object):
                 previous_flashes_count.append([target_candidate,previous_flashes.count(target_candidate)])
             least_index = np.argmin(previous_flashes_count,axis=0)[1]
             choosen_candidate = previous_flashes_count[least_index][0]
+
+            # generate new flash_sequence
+            new_sequence = [choosen_candidate]
+            li = list(range(num_rows * num_col))
+
+
+            print("new_sequence1 :", new_sequence)
+            #generate sequence
+            while len(new_sequence) < 6:
+                nextelem = random.choice(li)
+                print("nextelem :", nextelem)
+                nl = self.get_neighbors(new_sequence)
+                #random until get the flasshes sequence
+                while(nextelem in nl or nextelem in current_elements or nextelem in next_elements):
+                    nextelem = random.choice(li)
+                    print("nextelem :", nextelem)
+                new_sequence.append(nextelem)
+            print("new_sequence2: ", new_sequence)
+
+
+
+            print("self.sequence_number: ",self.sequence_number)
+
+            # update flashing sequences
+            print(self.sequence_number)
+
+            self.flash_sequence = self.flash_sequence[0:self.sequence_number+ CONCURRENT_ELEMENTS] + new_sequence + self.flash_sequence[self.sequence_number+CONCURRENT_ELEMENTS:]
+
+
+
 
 
 
