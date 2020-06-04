@@ -328,7 +328,7 @@ class P300Window(object):
 
 
     def output_letter(self, receive, image_index):
-
+        # receive = [9,10,13]
         if not receive:
             if FLASH_CONCURRENT:
                 self.master.after(self.break_duration, self.start_concurrent_flashing)
