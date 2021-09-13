@@ -1,4 +1,4 @@
-# BCI @ AIT
+# Thai P300 BCI Speller
 
 ## About
 
