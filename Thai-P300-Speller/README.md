@@ -8,7 +8,7 @@ Hardware:
 Software:
 - Python
 
-Offline P300 to collectm sample data and train the model
+### Offline P300 to collectm sample data and train the model
    1. Run <code>python3 1-acquisition/lsl-stream.py</code> on the background
    2. Run <code>python3 1-acquisition/lsl-viewer.py</code> on another tab to check the EEG and then close
    3. Run <code>python3 2-experiment/offline/th_offline_cb.py</code>  (do not click "start" yet)
@@ -19,11 +19,11 @@ Offline P300 to collectm sample data and train the model
    8. Use <code>3-analysis/train_model.ipynb<code> to train and save the classification model.
 
 
-Online P300 (with target)
+### Online P300 (with target)
    1. Run <code>python3 2-experiment/online/main_target.py<code>
    2. Click "start" on the pop-up window
 
    
-Online P300 (without target)
+### Online P300 (without target)
    1. Run <code>python3 2-experiment/online/main_notarget.py<code>
    2. Click "start" on the pop-up window
