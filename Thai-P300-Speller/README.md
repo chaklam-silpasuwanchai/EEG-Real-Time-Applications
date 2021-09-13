@@ -17,10 +17,12 @@ Offline P300 to collectm sample data and train the model
    6. Data can be found in <code>th_data<code> ; Use <code>3-analysis/offline_analysis.ipynb<code> to analyze the data. You should see a spike for targets, and vice versa for non-targets.
    7. Use <code>3-analysis/combine_par_data.ipynb<code> to combine the participant's data.
    8. Use <code>3-analysis/train_model.ipynb<code> to train and save the classification model.
-   
+
+
 Online P300 (with target)
    1. Run <code>python3 2-experiment/online/main_target.py<code>
    2. Click "start" on the pop-up window
+
    
 Online P300 (without target)
    1. Run <code>python3 2-experiment/online/main_notarget.py<code>
