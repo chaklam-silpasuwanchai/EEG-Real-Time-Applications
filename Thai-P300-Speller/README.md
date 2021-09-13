@@ -14,7 +14,8 @@ Software:
    3. Run <code>python3 2-experiment/offline/th_offline_cb.py</code>  (do not click "start" yet)
    4. Run <code>python3 2-experiment/offline/lsl-record-offline.py</code> on another tab; it should detect the marker stream from (iii)
    5. Click "start" on (iii)
-   6. Data can be found in <code>th_data<code> Use <code>3-analysis/offline_analysis.ipynb<code> to analyze the data. You should see a spike for targets, and vice versa for non-targets.
+   6. Data can be found in <code>th_data<code>
+   Use <code>3-analysis/offline_analysis.ipynb<code> to analyze the data. You should see a spike for targets, and vice versa for non-targets.
    7. Use <code>3-analysis/combine_par_data.ipynb<code> to combine the participant's data.
    8. Use <code>3-analysis/train_model.ipynb<code> to train and save the classification model.
 
