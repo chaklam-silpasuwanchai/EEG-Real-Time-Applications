@@ -54,7 +54,6 @@ def one_stimuli_blinking(frame_on, frame_off, pattern1, pattern2):
         pattern2.setAutoDraw(False)
 
 # %%
-#Author: Apiporn Simapornchai
 def three_stimuli_blinking(frame_on1, frame_off1, frame_on2, frame_off2, frame_on3, frame_off3, shapes, flipCount,count):
     looptime = math.gcd(frame_on1,math.gcd(frame_on2,frame_on3))
     
