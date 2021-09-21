@@ -6,7 +6,10 @@ Created on Thu Dec 13 13:47:36 2018
 @author: ldd
 """
 from sklearn import svm
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+
 
 tf.GraphKeys.VARIABLES = tf.GraphKeys.GLOBAL_VARIABLES
 import numpy as np
