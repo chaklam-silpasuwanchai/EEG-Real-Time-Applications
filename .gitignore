@@ -52,4 +52,6 @@ docs/_build/
 
 
 # Reconstruction
-/Reconstruction/content/EEGImageNetDataset_Spam/*
+Reconstruction/content/EEGImageNetDataset_Spam/*
+Reconstruction/experiment/Nopphon/01 - Deep Learning - PyTorch - Generative Adversarial Network.ipynb
+Reconstruction/experiment/Nopphon/content/celeba/img_align_celeba/*
