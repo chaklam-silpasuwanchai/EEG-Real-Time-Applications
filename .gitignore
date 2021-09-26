@@ -55,3 +55,7 @@ docs/_build/
 Reconstruction/content/EEGImageNetDataset_Spam/*
 Reconstruction/experiment/Nopphon/content/celeba/img_align_celeba/*
 Reconstruction/experiment/Nopphon/content/very_nice_dataset/very_nice_dataset.dat
+Reconstruction/experiment/akrarads/tigers
+Reconstruction/experiment/akrarads/faces
+Reconstruction/experiment/akrarads/apples
+Reconstruction/experiment/akrarads/dataset
