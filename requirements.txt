@@ -64,7 +64,7 @@ macropy3==1.1.0b2
 Markdown==3.0.1
 MarkupSafe==1.1.1
 matplotlib==3.2.1
-mistune==0.8.4
+mistune==2.0.3
 mne==0.20.0
 mne-realtime==0.1.dev0
 mock==4.0.2
