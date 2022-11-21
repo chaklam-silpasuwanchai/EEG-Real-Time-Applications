@@ -1,7 +1,0 @@
-imagenet labels: https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
-
-dataset: https://github.com/perceivelab/eeg_visual_classification
-
-paper: https://openaccess.thecvf.com/content_cvpr_2017/papers/Spampinato_Deep_Learning_Human_CVPR_2017_paper.pdf
-
-
