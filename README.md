@@ -30,8 +30,6 @@ Topics include:
 2. **SSVEP Control** - aims to create an unsupervised online classification of three targets using Filter-bank Canonical Correlation Analysis.  Since this is unsupervised, offline analysis is done mainly to identify optimal parameters (e.g., epoch width).  Useful for students to understand the SSVEP paradigms.
 3. **P300 Speller** - aims to create a 6 x 6 matrix speller using different stimuli variations; unsupervised method (e.g., discriminant analysis) will be demonstrated for online classification.  Useful for students to understand how ERP works.
 4. **Motor Imagery Control** - aims to allow users to train left/right movement thoughts to control left/right movements
-5. **Real-time Emotion Recognition** - aims to create a real-time (online) emotion classification system based on power spectrum.
-6. **Thoughts reconstruction** - aims to perform thoughts reconstruction by translating EEG signals to audio/visual forms using GANs.
 
 Things need to take precaution:
 - To get a clean signal, it is important to **stay at a location free of electric artifacts**.  When you look at your brain signals using lsl-viewer, it should be around low frequency, around -10 or less.  If it is more, try make sure your feet/hand is touching the ground and see whether the volts changes.  Also, if your bluetooth receiver is near the power outlet, it can also increase the frequency significantly.  Try move to different locations that are free of power influences.  Last, even your feet/hand is grounded, make sure no electricity is on the ground!, e.g., leaving some plugs on the ground
